@@ -6,6 +6,8 @@ from datetime import datetime
 from data.utils import Season
 from data.load_csv import DataLoader
 from data.process import DataProcessor
+from features.pi_rating import PiRatingsCalculator, RatingsManager
+from features.pi_rating_old import get_ratings
 
 import xgboost as xgb
 from category_encoders import OneHotEncoder
@@ -28,7 +30,7 @@ import shap
 
 if __name__ == '__main__':
     dataset_path = 'epl-training.csv'
-    season = Season.Past2
+    season = Season.Past5
 
     data_loader = DataLoader(dataset_path, season)
     data_loader.read_csv()
@@ -36,6 +38,18 @@ if __name__ == '__main__':
     data_loader.select_seasons(season)
     df = data_loader.get_df()
     print(df.head())
-
     data_processor = DataProcessor(df)
     print(len(data_processor.unique_teams))
+
+    calculator = PiRatingsCalculator()
+    manager = RatingsManager(df)
+    manager.update_match_ratings(calculator)
+    print("new")
+    print(manager.pi_ratings.loc[(manager.pi_ratings['Team'] == 'Man United') | (manager.pi_ratings['Team'] == 'Man City')].sort_index(ascending=False))
+    print(manager.pi_pairwise.loc[(manager.pi_pairwise['HomeTeam'] == 'Man United') & (manager.pi_pairwise['AwayTeam'] == 'Man City') | (manager.pi_pairwise['HomeTeam'] == 'Man City') & (manager.pi_pairwise['AwayTeam'] == 'Man United')].sort_index(ascending=False))
+    
+    print("\n\nold")
+    unique_teams = data_processor.unique_teams
+    pi_ratings, pairwise_pi, weighted_pairwise_pi = get_ratings(df, unique_teams)
+    print(pi_ratings.loc[(pi_ratings['Team'] == 'Man United') | (pi_ratings['Team'] == 'Man City')].sort_index(ascending=False))
+    print(pairwise_pi.loc[(pairwise_pi['HomeTeam'] == 'Man United') & (pairwise_pi['AwayTeam'] == 'Man City') | (pairwise_pi['HomeTeam'] == 'Man City') & (pairwise_pi['AwayTeam'] == 'Man United')].sort_index(ascending=False))

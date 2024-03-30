@@ -152,4 +152,4 @@ def main():
 
     client = LeagueDataClient(api_key)
     df = GenDataFrame(client, league_name, country, years).main()
-    df.to_csv('newfootystats.csv', index=False)
+    df.to_csv('footystats.csv', index=False)
