@@ -2,6 +2,8 @@ import math
 from typing import Tuple
 import pandas as pd
 
+pd.options.mode.chained_assignment = None  # default='warn'
+
 class PiRatingsCalculator:
     C = 3
     LOG_BASE = 10

@@ -7,7 +7,6 @@ from data.utils import Season
 from data.load_csv import DataLoader
 from data.process import DataProcessor
 from features.pi_rating import PiRatingsCalculator, RatingsManager
-from features.pi_rating_old import get_ratings
 
 import xgboost as xgb
 from category_encoders import OneHotEncoder
@@ -48,8 +47,3 @@ if __name__ == '__main__':
     print(manager.pi_ratings.loc[(manager.pi_ratings['Team'] == 'Man United') | (manager.pi_ratings['Team'] == 'Man City')].sort_index(ascending=False))
     print(manager.pi_pairwise.loc[(manager.pi_pairwise['HomeTeam'] == 'Man United') & (manager.pi_pairwise['AwayTeam'] == 'Man City') | (manager.pi_pairwise['HomeTeam'] == 'Man City') & (manager.pi_pairwise['AwayTeam'] == 'Man United')].sort_index(ascending=False))
     
-    print("\n\nold")
-    unique_teams = data_processor.unique_teams
-    pi_ratings, pairwise_pi, weighted_pairwise_pi = get_ratings(df, unique_teams)
-    print(pi_ratings.loc[(pi_ratings['Team'] == 'Man United') | (pi_ratings['Team'] == 'Man City')].sort_index(ascending=False))
-    print(pairwise_pi.loc[(pairwise_pi['HomeTeam'] == 'Man United') & (pairwise_pi['AwayTeam'] == 'Man City') | (pairwise_pi['HomeTeam'] == 'Man City') & (pairwise_pi['AwayTeam'] == 'Man United')].sort_index(ascending=False))
