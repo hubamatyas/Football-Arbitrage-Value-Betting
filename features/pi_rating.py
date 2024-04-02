@@ -98,8 +98,15 @@ class RatingsManager:
         return pairwise_pi
 
     def initialize_weighted_ratings(self) -> pd.DataFrame:
-        # Initialize weighted ratings with the same structure as pi_ratings
-        weighted_pi = pd.DataFrame(self.unique_teams, columns=['Team'])
+        # Initialize weighted ratings with the same structure as pairwise pi ratings
+        matchups = [
+            (home, away)
+            for home in self.unique_teams
+            for away in self.unique_teams
+            if home != away
+        ]
+
+        weighted_pi = pd.DataFrame(matchups, columns=['HomeTeam', 'AwayTeam'])
         weighted_pi['WeightedHomeRating'] = 0.0
         weighted_pi['WeightedAwayRating'] = 0.0
         return weighted_pi
@@ -151,8 +158,40 @@ class RatingsManager:
         self.pi_pairwise.loc[(self.pi_pairwise['HomeTeam'] == team2) & (self.pi_pairwise['AwayTeam'] == team1), \
                         ['HomeRating', 'AwayRating']] = updated_cross_pair_rating['HomeRating'].values[0], updated_cross_pair_rating['AwayRating'].values[0]
 
+
+    def update_weighted_ratings(self, row):
+        if pd.isnull(row['HomeTeam']):
+            return
+
+        team1 = row['HomeTeam']
+        team2 = row['AwayTeam']
+
+        team1_rating = self.pi_ratings.loc[self.pi_ratings['Team'] == team1]
+        team2_rating = self.pi_ratings.loc[self.pi_ratings['Team'] == team2]
+
+        hh_rating = self.pi_pairwise.loc[(self.pi_pairwise['HomeTeam'] == team1) & (self.pi_pairwise['AwayTeam'] == team2)]['HomeRating'].values[0]
+        aa_rating = self.pi_pairwise.loc[(self.pi_pairwise['HomeTeam'] == team1) & (self.pi_pairwise['AwayTeam'] == team2)]['AwayRating'].values[0]
+        ha_rating = self.pi_pairwise.loc[(self.pi_pairwise['HomeTeam'] == team2) & (self.pi_pairwise['AwayTeam'] == team1)]['HomeRating'].values[0]
+        ah_rating = self.pi_pairwise.loc[(self.pi_pairwise['HomeTeam'] == team2) & (self.pi_pairwise['AwayTeam'] == team1)]['AwayRating'].values[0]
+
+        weighted_home_rating = self.BETA * (hh_rating + aa_rating) + (1 - self.BETA) * team1_rating['HomeRating'].values[0]
+        weighted_away_rating = self.BETA * (ha_rating + ah_rating) + (1 - self.BETA) * team2_rating['AwayRating'].values[0]
+
+        self.pi_weighted.loc[self.pi_weighted['HomeTeam'] == team1, ['WeightedHomeRating']] = weighted_home_rating
+        self.pi_weighted.loc[self.pi_weighted['AwayTeam'] == team2, ['WeightedAwayRating']] = weighted_away_rating
+
+
     def update_match_ratings(self, calculator: PiRatingsCalculator):
         for _, row in self.data.iterrows():
             self.update_pi_ratings(row, calculator)
             self.update_pi_pairwise(row, calculator)
-            # self.update_weighted_ratings(row)
+            self.update_weighted_ratings(row)
+
+    def get_pi_ratings(self):
+        return self.pi_ratings
+    
+    def get_pi_pairwise(self):
+        return self.pi_pairwise
+    
+    def get_weighted_ratings(self):
+        return self.pi_weighted

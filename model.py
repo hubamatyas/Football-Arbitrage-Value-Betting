@@ -36,14 +36,14 @@ if __name__ == '__main__':
     data_loader.parse_df()
     data_loader.select_seasons(season)
     df = data_loader.get_df()
-    print(df.head())
     data_processor = DataProcessor(df)
     print(len(data_processor.unique_teams))
 
     calculator = PiRatingsCalculator()
     manager = RatingsManager(df)
     manager.update_match_ratings(calculator)
-    print("new")
-    print(manager.pi_ratings.loc[(manager.pi_ratings['Team'] == 'Man United') | (manager.pi_ratings['Team'] == 'Man City')].sort_index(ascending=False))
-    print(manager.pi_pairwise.loc[(manager.pi_pairwise['HomeTeam'] == 'Man United') & (manager.pi_pairwise['AwayTeam'] == 'Man City') | (manager.pi_pairwise['HomeTeam'] == 'Man City') & (manager.pi_pairwise['AwayTeam'] == 'Man United')].sort_index(ascending=False))
-    
+
+    weighted_pairwise_pi = manager.get_weighted_ratings()
+    print(weighted_pairwise_pi.head())
+    sample_weighted_pi = weighted_pairwise_pi.loc[(weighted_pairwise_pi['HomeTeam'] == 'Man United') & (weighted_pairwise_pi['AwayTeam'] == 'Man City') | (weighted_pairwise_pi['HomeTeam'] == 'Man City') & (weighted_pairwise_pi['AwayTeam'] == 'Man United')].sort_index(ascending=False)
+    print(sample_weighted_pi)
