@@ -66,9 +66,9 @@ class RatingsManager:
         self.data: pd.DataFrame = data
         self.latest_date: pd.Timestamp = self.get_latest_date()
         self.unique_teams: list[str] = self.get_unique_teams()
-        self.pi_ratings: pd.DataFrame = self.initialize_ratings()
-        self.pi_pairwise: pd.DataFrame = self.initialize_pairwise_ratings()
-        self.pi_weighted: pd. DataFrame = self.initialize_weighted_ratings()
+        self.pi_ratings: pd.DataFrame = self.init_ratings()
+        self.pi_pairwise: pd.DataFrame = self.init_pairwise_ratings()
+        self.pi_weighted: pd. DataFrame = self.init_weighted_ratings()
 
     def get_unique_teams(self) -> list[str]:
         home_teams = self.data['HomeTeam'].unique().tolist()
@@ -78,13 +78,13 @@ class RatingsManager:
     def get_latest_date(self) -> pd.Timestamp:
         return pd.to_datetime(self.data['Date']).max()
 
-    def initialize_ratings(self) -> pd.DataFrame:
+    def init_ratings(self) -> pd.DataFrame:
         pi_ratings = pd.DataFrame(self.unique_teams, columns=['Team'])
         pi_ratings['HomeRating'] = 0.0
         pi_ratings['AwayRating'] = 0.0
         return pi_ratings
 
-    def initialize_pairwise_ratings(self) -> pd.DataFrame:
+    def init_pairwise_ratings(self) -> pd.DataFrame:
         matchups = [
             (home, away)
             for home in self.unique_teams
@@ -97,7 +97,7 @@ class RatingsManager:
         pairwise_pi['AwayRating'] = 0.0
         return pairwise_pi
 
-    def initialize_weighted_ratings(self) -> pd.DataFrame:
+    def init_weighted_ratings(self) -> pd.DataFrame:
         # Initialize weighted ratings with the same structure as pairwise pi ratings
         matchups = [
             (home, away)
