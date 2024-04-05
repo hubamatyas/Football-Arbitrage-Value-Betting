@@ -193,5 +193,5 @@ class RatingsManager:
     def get_pi_pairwise(self):
         return self.pi_pairwise
     
-    def get_weighted_ratings(self):
+    def get_pi_weighted(self):
         return self.pi_weighted
