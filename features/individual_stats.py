@@ -123,9 +123,12 @@ class IndividualTeamStats:
             'Fouls': [],
             'Seasons': [],
             'NumOfMatches': [],
+            'NumOfHomeMatches': [],
+            'NumOfAwayMatches': [],
             'Conceded': [],
             'HalfTimeGoals': [],
-            'ShotAccuracy': [],
+            # 'ShotAccuracy': [],
+            # 'GoalAccuracy': [],
             'GoalsLastNMatches': [],
             'GoalDiffLastNMatches': [],
         }
@@ -150,9 +153,12 @@ class IndividualTeamStats:
             data['Fouls'].append(self.team_fouls[team])
             data['Seasons'].append(len(self.team_seasons[team]))
             data['NumOfMatches'].append(self.team_wins[team] + self.team_draws[team] + self.team_losses[team])
+            data['NumOfHomeMatches'].append(self.team_home_wins[team] + self.team_home_draws[team] + self.team_home_losses[team])
+            data['NumOfAwayMatches'].append(self.team_away_wins[team] + self.team_away_draws[team] + self.team_away_losses[team])
             data['Conceded'].append(self.team_conceded[team])
             data['HalfTimeGoals'].append(self.team_half_time_goals[team])
-            data['ShotAccuracy'].append(self.team_shots_on_target[team] / self.team_shots_on_goal[team] if self.team_shots_on_goal[team] > 0 else 0)
+            # data['ShotAccuracy'].append(self.team_shots_on_target[team] / self.team_shots_on_goal[team] if self.team_shots_on_goal[team] > 0 else 0)
+            # data['GoalAccuracy'].append(self.team_goals[team] / self.team_shots_on_target[team] if self.team_shots_on_target[team] > 0 else 0)
             data['GoalsLastNMatches'].append(self.team_last_n_matches_goals[team])
             data['GoalDiffLastNMatches'].append(self.team_last_n_matches_goal_diff[team])
 

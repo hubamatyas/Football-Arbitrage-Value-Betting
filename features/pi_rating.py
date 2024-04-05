@@ -68,7 +68,7 @@ class RatingsManager:
         self.unique_teams: list[str] = self.get_unique_teams()
         self.pi_ratings: pd.DataFrame = self.init_ratings()
         self.pi_pairwise: pd.DataFrame = self.init_pairwise_ratings()
-        self.pi_weighted: pd. DataFrame = self.init_weighted_ratings()
+        self.pi_weighted: pd. DataFrame = self.init_pairwise_ratings()
 
     def get_unique_teams(self) -> list[str]:
         home_teams = self.data['HomeTeam'].unique().tolist()
@@ -167,8 +167,8 @@ class RatingsManager:
         weighted_home_rating = self.BETA * (hh_rating + aa_rating) + (1 - self.BETA) * team1_rating['HomeRating'].values[0]
         weighted_away_rating = self.BETA * (ha_rating + ah_rating) + (1 - self.BETA) * team2_rating['AwayRating'].values[0]
 
-        self.pi_weighted.loc[self.pi_weighted['HomeTeam'] == team1, ['WeightedHomeRating']] = weighted_home_rating
-        self.pi_weighted.loc[self.pi_weighted['AwayTeam'] == team2, ['WeightedAwayRating']] = weighted_away_rating
+        self.pi_weighted.loc[self.pi_weighted['HomeTeam'] == team1, ['HomeRating']] = weighted_home_rating
+        self.pi_weighted.loc[self.pi_weighted['AwayTeam'] == team2, ['AwayRating']] = weighted_away_rating
 
     def update_match_ratings(self, calculator: PiRatingsCalculator):
         for _, row in self.data.iterrows():

@@ -9,6 +9,7 @@ from data.process import DataProcessor
 from features.pi_rating import PiRatingsCalculator, RatingsManager
 from features.individual_stats import IndividualTeamStats
 from features.pairwise_stats import PairwiseTeamStats
+from pipeline.X_table_constructor import XTableConstructor
 
 import xgboost as xgb
 from category_encoders import OneHotEncoder
@@ -70,6 +71,12 @@ if __name__ == '__main__':
     data_processor = DataProcessor(df)
     unique_teams = data_processor.unique_teams
 
-    individual_stats = example_team_stats(df, unique_teams)
-    example_pi(df)
-    example_pairwise_stats(df, unique_teams, individual_stats)
+    # individual_stats = example_team_stats(df, unique_teams)
+    # example_pi(df)
+    # example_pairwise_stats(df, unique_teams, individual_stats)
+    pi_ratings, pi_pairwise, pi_weighted = RatingsManager(df).compute()
+    individual_stats = IndividualTeamStats(df, unique_teams).compute()
+    pairwise_stats = PairwiseTeamStats(df, unique_teams, individual_stats).compute()
+    X_table = XTableConstructor(individual_stats, pairwise_stats, pi_ratings, pi_pairwise, pi_weighted).construct_table()
+    print(X_table.shape)
+    print(X_table.head())
