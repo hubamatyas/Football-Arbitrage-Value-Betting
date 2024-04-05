@@ -116,9 +116,6 @@ class RatingsManager:
         return self.ALPHA ** time_diff
 
     def update_pi_ratings(self, row, calculator: PiRatingsCalculator):
-        if pd.isnull(row['HomeTeam']):
-            return
-
         team1 = row['HomeTeam']
         team2 = row['AwayTeam']
 
@@ -137,9 +134,6 @@ class RatingsManager:
         self.pi_ratings.loc[self.pi_ratings['Team'] == team2] = updated_team2_rating
 
     def update_pi_pairwise(self, row, calculator: PiRatingsCalculator):
-        if pd.isnull(row['HomeTeam']):
-            return
-
         team1 = row['HomeTeam']
         team2 = row['AwayTeam']
 
@@ -158,11 +152,7 @@ class RatingsManager:
         self.pi_pairwise.loc[(self.pi_pairwise['HomeTeam'] == team2) & (self.pi_pairwise['AwayTeam'] == team1), \
                         ['HomeRating', 'AwayRating']] = updated_cross_pair_rating['HomeRating'].values[0], updated_cross_pair_rating['AwayRating'].values[0]
 
-
     def update_weighted_ratings(self, row):
-        if pd.isnull(row['HomeTeam']):
-            return
-
         team1 = row['HomeTeam']
         team2 = row['AwayTeam']
 
@@ -180,7 +170,6 @@ class RatingsManager:
         self.pi_weighted.loc[self.pi_weighted['HomeTeam'] == team1, ['WeightedHomeRating']] = weighted_home_rating
         self.pi_weighted.loc[self.pi_weighted['AwayTeam'] == team2, ['WeightedAwayRating']] = weighted_away_rating
 
-
     def update_match_ratings(self, calculator: PiRatingsCalculator):
         for _, row in self.data.iterrows():
             self.update_pi_ratings(row, calculator)
@@ -195,3 +184,8 @@ class RatingsManager:
     
     def get_pi_weighted(self):
         return self.pi_weighted
+    
+    def compute(self):
+        calculator = PiRatingsCalculator()
+        self.update_match_ratings(calculator)
+        return self.get_pi_ratings(), self.get_pi_pairwise(), self.get_pi_weighted()

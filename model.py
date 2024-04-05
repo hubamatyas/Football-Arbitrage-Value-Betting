@@ -7,7 +7,8 @@ from data.utils import Season
 from data.load_csv import DataLoader
 from data.process import DataProcessor
 from features.pi_rating import PiRatingsCalculator, RatingsManager
-from features.descriptive_stats import DescriptiveStats, IndividualTeamStats, PairwiseTeamStats
+from features.individual_stats import IndividualTeamStats
+from features.pairwise_stats import PairwiseTeamStats
 
 import xgboost as xgb
 from category_encoders import OneHotEncoder
@@ -29,13 +30,7 @@ from sklearn.linear_model import LogisticRegression
 import shap
 
 def example_pi(df: pd.DataFrame):
-    calculator = PiRatingsCalculator()
-    manager = RatingsManager(df)
-    manager.update_match_ratings(calculator)
-
-    pi = manager.get_pi_ratings()
-    pairwise_pi = manager.get_pi_pairwise()
-    weighted_pairwise_pi = manager.get_pi_weighted()
+    pi, pairwise_pi, weighted_pairwise_pi = RatingsManager(df).compute()
 
     print('Lenght of pi:', len(pi))
     print('Lenght of pairwise_pi:', len(pairwise_pi))
@@ -45,26 +40,23 @@ def example_pi(df: pd.DataFrame):
     # print(sample_weighted_pi)
 
 def example_pairwise_stats(df: pd.DataFrame, unique_teams: list, individual_stats: pd.DataFrame):
-    pairwise_stats = PairwiseTeamStats(df, unique_teams, individual_stats)
-    pairwise_stats.compute_pairwise_stats()
-    pairwise_stats.compute_pairwise_goal_diff()
-    pairwise_stats_df = pairwise_stats.generate_features_dataframe()
-    print(pairwise_stats_df.head())
+    pairwise_stats = PairwiseTeamStats(df, unique_teams, individual_stats).compute()
+
+    print(pairwise_stats.head())
 
     # print where HomeTeam = Southampton and AwayTeam = Brighton
-    sample_pairwise_stats = pairwise_stats_df.loc[(pairwise_stats_df['HomeTeam'] == 'Southampton') & (pairwise_stats_df['AwayTeam'] == 'Brighton')]
+    sample_pairwise_stats = pairwise_stats.loc[(pairwise_stats['HomeTeam'] == 'Southampton') & (pairwise_stats['AwayTeam'] == 'Brighton')]
     print(sample_pairwise_stats)
 
     # print the opposite
-    sample_pairwise_stats = pairwise_stats_df.loc[(pairwise_stats_df['HomeTeam'] == 'Brighton') & (pairwise_stats_df['AwayTeam'] == 'Southampton')]
+    sample_pairwise_stats = pairwise_stats.loc[(pairwise_stats['HomeTeam'] == 'Brighton') & (pairwise_stats['AwayTeam'] == 'Southampton')]
     print(sample_pairwise_stats)
 
 def example_team_stats(df: pd.DataFrame, unique_teams: list):
-    team_stats = IndividualTeamStats(df, unique_teams)
-    team_stats.compute_team_stats()
-    team_stats_df = team_stats.generate_features_dataframe()
-    print(team_stats_df.head())
-    return team_stats_df
+    team_stats = IndividualTeamStats(df, unique_teams).compute()
+
+    print(team_stats.head())
+    return team_stats
     
 if __name__ == '__main__':
     dataset_path = 'epl-training.csv'
@@ -79,5 +71,5 @@ if __name__ == '__main__':
     unique_teams = data_processor.unique_teams
 
     individual_stats = example_team_stats(df, unique_teams)
-    # example_pi(df)
+    example_pi(df)
     example_pairwise_stats(df, unique_teams, individual_stats)
