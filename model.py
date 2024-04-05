@@ -10,6 +10,7 @@ from features.pi_rating import PiRatingsCalculator, RatingsManager
 from features.individual_stats import IndividualTeamStats
 from features.pairwise_stats import PairwiseTeamStats
 from pipeline.X_table_constructor import XTableConstructor
+from pipeline.table_encoder import XTableEncoder, YSeriesEncoder
 
 import xgboost as xgb
 from category_encoders import OneHotEncoder
@@ -63,20 +64,24 @@ if __name__ == '__main__':
     dataset_path = 'epl-training.csv'
     season = Season.Past5
 
-    data_loader = DataLoader(dataset_path, season)
-    data_loader.read_csv()
-    data_loader.parse_df()
-    data_loader.select_seasons(season)
-    df = data_loader.get_df()
+    df = DataLoader(dataset_path, season).load()
     data_processor = DataProcessor(df)
-    unique_teams = data_processor.unique_teams
+    unique_teams = data_processor.get_unique_teams()
+    df_train, df_test = data_processor.split_data()
 
-    # individual_stats = example_team_stats(df, unique_teams)
-    # example_pi(df)
-    # example_pairwise_stats(df, unique_teams, individual_stats)
-    pi_ratings, pi_pairwise, pi_weighted = RatingsManager(df).compute()
-    individual_stats = IndividualTeamStats(df, unique_teams).compute()
-    pairwise_stats = PairwiseTeamStats(df, unique_teams, individual_stats).compute()
-    X_table = XTableConstructor(individual_stats, pairwise_stats, pi_ratings, pi_pairwise, pi_weighted).construct_table()
-    print(X_table.shape)
-    print(X_table.head())
+    # individual_stats = example_team_stats(df_train, unique_teams)
+    # example_pi(df_train)
+    # example_pairwise_stats(df_train, unique_teams, individual_stats)
+    pi_ratings, pi_pairwise, pi_weighted = RatingsManager(df_train).compute()
+    individual_stats = IndividualTeamStats(df_train, unique_teams).compute()
+    pairwise_stats = PairwiseTeamStats(df_train, unique_teams, individual_stats).compute()
+
+    X_train = XTableConstructor(individual_stats, pairwise_stats, pi_ratings, pi_pairwise, pi_weighted).construct_table()
+    y_train = df_train['FTR']
+    print(X_train.shape)
+    print(X_train.head())
+
+    X_train = XTableEncoder(X_train).encode()
+    y_train = YSeriesEncoder(y_train).encode()
+    print(X_train.shape)
+    print(X_train.head())
