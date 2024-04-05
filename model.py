@@ -44,11 +44,11 @@ def example_pi(df: pd.DataFrame):
     # sample_weighted_pi = weighted_pairwise_pi.loc[(weighted_pairwise_pi['HomeTeam'] == 'Man United') & (weighted_pairwise_pi['AwayTeam'] == 'Man City') | (weighted_pairwise_pi['HomeTeam'] == 'Man City') & (weighted_pairwise_pi['AwayTeam'] == 'Man United')].sort_index(ascending=False)
     # print(sample_weighted_pi)
 
-def example_pairwise_stats(df: pd.DataFrame, unique_teams: list):
-    pairwise_stats = PairwiseTeamStats(df, unique_teams, None)
+def example_pairwise_stats(df: pd.DataFrame, unique_teams: list, individual_stats: pd.DataFrame):
+    pairwise_stats = PairwiseTeamStats(df, unique_teams, individual_stats)
     pairwise_stats.compute_pairwise_stats()
+    pairwise_stats.compute_pairwise_goal_diff()
     pairwise_stats_df = pairwise_stats.generate_features_dataframe()
-    print(len(pairwise_stats_df))
     print(pairwise_stats_df.head())
 
     # print where HomeTeam = Southampton and AwayTeam = Brighton
@@ -64,6 +64,7 @@ def example_team_stats(df: pd.DataFrame, unique_teams: list):
     team_stats.compute_team_stats()
     team_stats_df = team_stats.generate_features_dataframe()
     print(team_stats_df.head())
+    return team_stats_df
     
 if __name__ == '__main__':
     dataset_path = 'epl-training.csv'
@@ -77,6 +78,6 @@ if __name__ == '__main__':
     data_processor = DataProcessor(df)
     unique_teams = data_processor.unique_teams
 
-    example_team_stats(df, unique_teams)
+    individual_stats = example_team_stats(df, unique_teams)
     # example_pi(df)
-    # example_pairwise_stats(df, unique_teams)
+    example_pairwise_stats(df, unique_teams, individual_stats)
