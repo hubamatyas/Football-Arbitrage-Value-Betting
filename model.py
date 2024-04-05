@@ -77,6 +77,6 @@ if __name__ == '__main__':
     data_processor = DataProcessor(df)
     unique_teams = data_processor.unique_teams
 
-    # example_team_stats(df, unique_teams)
+    example_team_stats(df, unique_teams)
     # example_pi(df)
-    example_pairwise_stats(df, unique_teams)
+    # example_pairwise_stats(df, unique_teams)

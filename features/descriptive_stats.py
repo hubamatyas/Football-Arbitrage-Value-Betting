@@ -84,9 +84,11 @@ class DescriptiveStats:
 
 
 class IndividualTeamStats:
-    def __init__(self, df: pd.DataFrame, unique_teams: list[str]):
+    def __init__(self, df: pd.DataFrame, unique_teams: list[str], last_n_matches=6):
         self.df = df
+        self.reversed_df = self.df.iloc[::-1]
         self.unique_teams = unique_teams
+        self.last_n_matches = last_n_matches
 
         # TODO might be better to remove simple wins, draws, losses and
         # only keep team_home_wins, team_away_wins, team_home_draws, team_away_draws, team_home_losses, team_away_losses
@@ -109,6 +111,7 @@ class IndividualTeamStats:
         self.team_shots_on_goal = self.init_teams_dict()
         self.team_shots_on_target = self.init_teams_dict()
         self.team_half_time_goals = self.init_teams_dict()
+        self.team_last_n_matches = self.init_teams_dict_with_list()
 
     def init_teams_dict(self):
         return {team: 0 for team in self.unique_teams}
@@ -116,8 +119,11 @@ class IndividualTeamStats:
     def init_teams_set(self):
         return {team: set() for team in self.unique_teams}
     
+    def init_teams_dict_with_list(self):
+        return {team: [] for team in self.unique_teams}
+    
     def compute_team_stats(self):
-        for _, row in self.df.iterrows():
+        for _, row in self.reversed_df.iterrows():
             if pd.isnull(row['HomeTeam']):
                 continue
 
@@ -167,6 +173,12 @@ class IndividualTeamStats:
             self.team_seasons[row['HomeTeam']].add(row['Date'].year)
             self.team_seasons[row['AwayTeam']].add(row['Date'].year)
 
+            if len(self.team_last_n_matches[row['HomeTeam']]) < self.last_n_matches:
+                self.team_last_n_matches[row['HomeTeam']].append(row)
+
+            if len(self.team_last_n_matches[row['AwayTeam']]) < self.last_n_matches:
+                self.team_last_n_matches[row['AwayTeam']].append(row)
+
     def generate_features_dataframe(self):
         data = {
             'Team': [],
@@ -191,6 +203,7 @@ class IndividualTeamStats:
             'Conceded': [],
             'HalfTimeGoals': [],
             'ShotAccuracy': [],
+            'LastNMatches': []
         }
 
         for team in self.unique_teams:
@@ -216,6 +229,7 @@ class IndividualTeamStats:
             data['Conceded'].append(self.team_conceded[team])
             data['HalfTimeGoals'].append(self.team_half_time_goals[team])
             data['ShotAccuracy'].append(self.team_shots_on_target[team] / self.team_shots_on_goal[team] if self.team_shots_on_goal[team] > 0 else 0)
+            data['LastNMatches'].append(json.dumps(self.team_last_n_matches[team]))
 
         return pd.DataFrame(data)
 
@@ -243,6 +257,7 @@ class PairwiseTeamStats:
         self.pairwise_away_team_corners = self.init_pairwise_dict()
         self.pairwise_home_team_half_time_goals = self.init_pairwise_dict()
         self.pairwise_away_team_half_time_goals = self.init_pairwise_dict()
+        self.pairwise_goal_diff_last_n_matches = self.init_pairwise_dict()
 
     def init_pairwise_dict(self):
         matchups = [
@@ -288,6 +303,11 @@ class PairwiseTeamStats:
                 self.pairwise_home_team_draws[pair] += 1
                 self.pairwise_away_team_draws[pair] += 1
 
+    def compute_pairwise_goal_diff(self):
+        for pair in self.pairwise_home_team_goals.keys():
+            home_team, away_team = pair
+            self.pairwise_goal_diff_last_n_matches[pair] = self.individual_stats.team_goals[home_team] - self.individual_stats.team_goals[away_team]
+
     def generate_features_dataframe(self):
         data = {
             'HomeTeam': [],
@@ -310,6 +330,7 @@ class PairwiseTeamStats:
             'AwayConceded': [],
             'HomeHalfTimeGoals': [],
             'AwayHalfTimeGoals': [],
+            'GoalDiffLastNMatches': []
         }
 
         for pair in self.pairwise_home_team_wins.keys():
@@ -334,5 +355,6 @@ class PairwiseTeamStats:
             data['AwayConceded'].append(self.pairwise_away_team_conceded[pair])
             data['HomeHalfTimeGoals'].append(self.pairwise_home_team_half_time_goals[pair])
             data['AwayHalfTimeGoals'].append(self.pairwise_away_team_half_time_goals[pair])
+            data['GoalDiffLastNMatches'].append(self.pairwise_goal_diff_last_n_matches[pair])
 
         return pd.DataFrame(data)
