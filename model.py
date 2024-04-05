@@ -10,7 +10,7 @@ from features.pi_rating import PiRatingsCalculator, PiRatingsManager
 from features.individual_stats import IndividualTeamStats
 from features.pairwise_stats import PairwiseTeamStats
 from pipeline.X_table_constructor import XTrainConstructor, XTestConstructor
-from pipeline.table_encoder import XTableEncoder, YSeriesEncoder
+from pipeline.pre_processer import XTableEncoder, YSeriesEncoder, CrossChecker
 
 import xgboost as xgb
 from category_encoders import OneHotEncoder
@@ -30,6 +30,18 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 
 import shap
+
+def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.DataFrame, y_test: pd.Series):
+    model = xgb.XGBClassifier(objective='multi:softmax', num_class=3)
+    model.fit(X_train, y_train)
+
+    y_pred = model.predict(X_test)
+    print('Accuracy:', accuracy_score(y_test, y_pred))
+    print('F1 Score:', f1_score(y_test, y_pred, average='macro'))
+    print('Precision:', precision_score(y_test, y_pred, average='macro'))
+    print('Recall:', recall_score(y_test, y_pred, average='macro'))
+
+    return model
 
 def example_pi(df: pd.DataFrame):
     pi, pairwise_pi, weighted_pairwise_pi = PiRatingsManager(df).compute()
@@ -80,26 +92,16 @@ if __name__ == '__main__':
 
     X_train = XTrainConstructor(df_train, unique_teams, is_pairwise_stats=False, is_pi_ratings=True, is_pi_pairwise=True, is_pi_weighted=True).construct_table()
     y_train = df_train['FTR']
-    X_train_encoded = XTableEncoder(X_train).encode()
-    y_train_encoded = YSeriesEncoder(y_train).encode()
+    X_train = XTableEncoder(X_train).run()
+    y_train = YSeriesEncoder(y_train).run()
 
     X_test = XTestConstructor(df_test, unique_teams, is_pairwise_stats=False, is_pi_ratings=True, is_pi_pairwise=True, is_pi_weighted=True).construct_table()
     y_test = df_test['FTR']
-    X_test_encoded = XTableEncoder(X_test).encode()
-    y_test_encoded = YSeriesEncoder(y_test).encode()
+    X_test = XTableEncoder(X_test).run()
+    y_test = YSeriesEncoder(y_test).run()
 
-    diff1 = set(X_test_encoded.columns) - set(X_train_encoded.columns)
-    diff2 = set(X_train_encoded.columns) - set(X_test_encoded.columns)
-    for col in diff1:
-        X_train_encoded[col] = 0
-    for col in diff2:
-        X_test_encoded[col] = 0
+    X_train, X_test = CrossChecker(X_train, X_test).run()
 
-    print("X_train_encoded:")
-    print(X_train_encoded.shape)
-    print(X_train_encoded.tail())
-    print()
-
-    print("X_test_encoded:")
-    print(X_test_encoded.shape)
-    print(X_test_encoded.tail())
+    # model = train_random_forest(X_train, y_train, X_test, y_test)
+    # model = train_logistic_regression(X_train, y_train, X_test, y_test)
+    model = train_xgboost(X_train, y_train, X_test, y_test)
