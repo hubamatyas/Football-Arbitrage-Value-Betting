@@ -58,22 +58,17 @@ class PiRatingsCalculator:
         return updated_home_team_ratings, updated_away_team_ratings
     
 
-class RatingsManager:
+class PiRatingsManager:
     ALPHA = 0.999
     BETA = 0.5
 
-    def __init__(self, data):
+    def __init__(self, data, unique_teams):
         self.data: pd.DataFrame = data
+        self.unique_teams: list[str] = unique_teams
         self.latest_date: pd.Timestamp = self.get_latest_date()
-        self.unique_teams: list[str] = self.get_unique_teams()
         self.pi_ratings: pd.DataFrame = self.init_ratings()
         self.pi_pairwise: pd.DataFrame = self.init_pairwise_ratings()
         self.pi_weighted: pd. DataFrame = self.init_pairwise_ratings()
-
-    def get_unique_teams(self) -> list[str]:
-        home_teams = self.data['HomeTeam'].unique().tolist()
-        away_teams = self.data['AwayTeam'].unique().tolist()
-        return list(set(home_teams + away_teams))
     
     def get_latest_date(self) -> pd.Timestamp:
         return pd.to_datetime(self.data['Date']).max()
@@ -152,7 +147,7 @@ class RatingsManager:
         self.pi_pairwise.loc[(self.pi_pairwise['HomeTeam'] == team2) & (self.pi_pairwise['AwayTeam'] == team1), \
                         ['HomeRating', 'AwayRating']] = updated_cross_pair_rating['HomeRating'].values[0], updated_cross_pair_rating['AwayRating'].values[0]
 
-    def update_weighted_ratings(self, row):
+    def update_pi_weighted(self, row):
         team1 = row['HomeTeam']
         team2 = row['AwayTeam']
 
@@ -174,7 +169,7 @@ class RatingsManager:
         for _, row in self.data.iterrows():
             self.update_pi_ratings(row, calculator)
             self.update_pi_pairwise(row, calculator)
-            self.update_weighted_ratings(row)
+            self.update_pi_weighted(row)
 
     def get_pi_ratings(self):
         return self.pi_ratings

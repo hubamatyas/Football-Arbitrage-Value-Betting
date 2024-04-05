@@ -1,41 +1,17 @@
 import pandas as pd
+from features.pi_rating import PiRatingsCalculator, PiRatingsManager
+from features.individual_stats import IndividualTeamStats
+from features.pairwise_stats import PairwiseTeamStats
 import json
 
 class XTableConstructor:
-    def __init__(self,individual_stats, pairwise_stats, pi_ratings=None, pi_pairwise=None, pi_weighted=None):
-        self.individual_stats: pd.DataFrame = individual_stats
-        self.pairwise_stats: pd.DataFrame = pairwise_stats
-        self.pi_ratings: pd.DataFrame = pi_ratings
-        self.pi_pairwise: pd.DataFrame = pi_pairwise
-        self.pi_weighted: pd.DataFrame = pi_weighted
-        self.X_table: pd.DataFrame = pd.DataFrame()
-    
-    def construct_table(self) -> pd.DataFrame:
-        for _, row in self.pairwise_stats.iterrows():
-            home_team = row['HomeTeam']
-            away_team = row['AwayTeam']
+    def __init__(self, is_pairwise_stats=False, is_pi_ratings=True, is_pi_pairwise=True, is_pi_weighted=True):
+        self.is_pairwise_stats: bool = is_pairwise_stats
+        self.is_pi_ratings: bool = is_pi_ratings
+        self.is_pi_pairwise: bool = is_pi_pairwise
+        self.is_pi_weighted: bool = is_pi_weighted
 
-            home_team_stats = self.individual_stats.loc[self.individual_stats['Team'] == home_team]
-            away_team_stats = self.individual_stats.loc[self.individual_stats['Team'] == away_team]
-
-            home_team_pairwise = self.pairwise_stats.loc[(self.pairwise_stats['HomeTeam'] == home_team) & (self.pairwise_stats['AwayTeam'] == away_team)]
-            away_team_pairwise = self.pairwise_stats.loc[(self.pairwise_stats['HomeTeam'] == away_team) & (self.pairwise_stats['AwayTeam'] == home_team)]
-
-            home_team_pi = self.pi_ratings.loc[self.pi_ratings['Team'] == home_team]
-            away_team_pi = self.pi_ratings.loc[self.pi_ratings['Team'] == away_team]
-
-            home_team_pairwise_pi = self.pi_pairwise.loc[(self.pi_pairwise['HomeTeam'] == home_team) & (self.pi_pairwise['AwayTeam'] == away_team)]
-            away_team_pairwise_pi = self.pi_pairwise.loc[(self.pi_pairwise['HomeTeam'] == away_team) & (self.pi_pairwise['AwayTeam'] == home_team)]
-
-            home_team_weighted_pi = self.pi_weighted.loc[self.pi_weighted['HomeTeam'] == home_team]
-            away_team_weighted_pi = self.pi_weighted.loc[self.pi_weighted['AwayTeam'] == away_team]
-
-            row: dict = self.construct_row(home_team, away_team, home_team_stats, away_team_stats, home_team_pairwise, away_team_pairwise, home_team_pi, away_team_pi, home_team_pairwise_pi, away_team_pairwise_pi, home_team_weighted_pi, away_team_weighted_pi)
-            self.X_table = self.X_table._append(row, ignore_index=True)
-
-        return self.X_table
-    
-    def construct_row(self, home_team, away_team, home_team_stats, away_team_stats, home_team_pairwise, away_team_pairwise, home_team_pi, away_team_pi, home_team_pairwise_pi, away_team_pairwise_pi, home_team_weighted_pi, away_team_weighted_pi) -> dict:
+    def construct_row(self, home_team, away_team, home_team_stats, away_team_stats, home_team_pi, away_team_pi, home_team_pairwise_pi, away_team_pairwise_pi, home_team_weighted_pi, away_team_weighted_pi) -> dict:
         row = {
             'HT': home_team,
             'AT': away_team,
@@ -48,13 +24,13 @@ class XTableConstructor:
         row = self.add_conceded_stats(row, home_team_stats, away_team_stats)
         row = self.add_last_n_matches_stats(row, home_team_stats, away_team_stats)
 
-        if self.pi_ratings is not None:
+        if self.is_pi_ratings:
             row = self.add_pi_ratings(row, home_team_pi, away_team_pi)
 
-        if self.pi_pairwise is not None:
+        if self.is_pi_pairwise:
             row = self.add_pi_pairwise(row, home_team_pairwise_pi, away_team_pairwise_pi)
 
-        if self.pi_weighted is not None:
+        if self.is_pi_weighted:
             row = self.add_pi_weighted(row, home_team_weighted_pi, away_team_weighted_pi)
 
         return row
@@ -142,4 +118,91 @@ class XTableConstructor:
         row['WPWAT_AwayRating'] = self.get_value(away_team_weighted_pi, 'AwayRating')
 
         return row
+
+class XTestConstructor(XTableConstructor):
+    def __init__(self, df, unique_teams, is_pairwise_stats=False, is_pi_ratings=True, is_pi_pairwise=True, is_pi_weighted=True):
+        super().__init__(is_pairwise_stats, is_pi_ratings, is_pi_pairwise, is_pi_weighted)
+        self.df: pd.DataFrame = df
+        self.X_test: pd.DataFrame = pd.DataFrame()
+        self.unique_teams: list[str] = unique_teams
+
+        self.pi_ratings, self.pi_pairwise, self.pi_weighted = PiRatingsManager(self.df, self.unique_teams).compute()
+        self.individual_stats = IndividualTeamStats(self.df, self.unique_teams).compute()
+        # self.pairwise_stats = PairwiseTeamStats(self.df, self.unique_teams, self.individual_stats).compute()
+
+    def construct_table(self) -> pd.DataFrame:
+        for _, row in self.df.iterrows():
+            home_team = row['HomeTeam']
+            away_team = row['AwayTeam']
+
+            home_team_stats = self.individual_stats.loc[self.individual_stats['Team'] == home_team]
+            away_team_stats = self.individual_stats.loc[self.individual_stats['Team'] == away_team]
+
+            home_team_pi = self.pi_ratings.loc[self.pi_ratings['Team'] == home_team]
+            away_team_pi = self.pi_ratings.loc[self.pi_ratings['Team'] == away_team]
+
+            home_team_pairwise_pi = self.pi_pairwise.loc[(self.pi_pairwise['HomeTeam'] == home_team) & (self.pi_pairwise['AwayTeam'] == away_team)]
+            away_team_pairwise_pi = self.pi_pairwise.loc[(self.pi_pairwise['HomeTeam'] == away_team) & (self.pi_pairwise['AwayTeam'] == home_team)]
+
+            home_team_weighted_pi = self.pi_weighted.loc[self.pi_weighted['HomeTeam'] == home_team]
+            away_team_weighted_pi = self.pi_weighted.loc[self.pi_weighted['AwayTeam'] == away_team]
+
+            row: dict = self.construct_row(home_team, away_team, home_team_stats, away_team_stats, home_team_pi, away_team_pi, home_team_pairwise_pi, away_team_pairwise_pi, home_team_weighted_pi, away_team_weighted_pi)
+            self.X_test = self.X_test._append(row, ignore_index=True)
+
+        return self.X_test
+
+class XTrainConstructor(XTableConstructor):
+    def __init__(self, df, unique_teams, is_pairwise_stats=False, is_pi_ratings=True, is_pi_pairwise=True, is_pi_weighted=True):
+        super().__init__(is_pairwise_stats, is_pi_ratings, is_pi_pairwise, is_pi_weighted)
         
+        self.df: pd.DataFrame = df
+        self.is_pi_ratings: bool = is_pi_ratings
+        self.is_pi_pairwise: bool = is_pi_pairwise
+        self.is_pi_weighted: bool = is_pi_weighted
+        self.unique_teams: list[str] = unique_teams
+        self.is_pairwise_stats: bool = is_pairwise_stats
+        self.X_train: pd.DataFrame = pd.DataFrame()
+    
+    def construct_table(self) -> pd.DataFrame:
+        individual_stats_manager = IndividualTeamStats(self.df, self.unique_teams)
+        # pairwise_stats_manager = PairwiseTeamStats(self.df, self.unique_teams, individual_stats_manager.generate_features_dataframe())
+
+        pi_ratings_manager = PiRatingsManager(self.df, self.unique_teams)
+        pi_ratings_calculator = PiRatingsCalculator()
+        for _, row in self.df.iterrows():
+
+            # Iterative implementation
+            pi_ratings, pi_pairwise, pi_weighted = self.update_pi_ratings(row, pi_ratings_manager, pi_ratings_calculator)
+            individual_stats = self.update_individual_stats(row, individual_stats_manager)
+            
+            home_team = row['HomeTeam']
+            away_team = row['AwayTeam']
+
+            home_team_stats = individual_stats.loc[individual_stats['Team'] == home_team]
+            away_team_stats = individual_stats.loc[individual_stats['Team'] == away_team]
+
+            home_team_pi = pi_ratings.loc[pi_ratings['Team'] == home_team] if self.is_pi_ratings else None
+            away_team_pi = pi_ratings.loc[pi_ratings['Team'] == away_team] if self.is_pi_ratings else None
+
+            home_team_pairwise_pi = pi_pairwise.loc[(pi_pairwise['HomeTeam'] == home_team) & (pi_pairwise['AwayTeam'] == away_team)] if self.is_pi_pairwise else None
+            away_team_pairwise_pi = pi_pairwise.loc[(pi_pairwise['HomeTeam'] == away_team) & (pi_pairwise['AwayTeam'] == home_team)] if self.is_pi_pairwise else None
+
+            home_team_weighted_pi = pi_weighted.loc[pi_weighted['HomeTeam'] == home_team] if self.is_pi_weighted else None
+            away_team_weighted_pi = pi_weighted.loc[pi_weighted['AwayTeam'] == away_team] if self.is_pi_weighted else None
+
+            row: dict = self.construct_row(home_team, away_team, home_team_stats, away_team_stats, home_team_pi, away_team_pi, home_team_pairwise_pi, away_team_pairwise_pi, home_team_weighted_pi, away_team_weighted_pi)
+            self.X_train = self.X_train._append(row, ignore_index=True)
+
+        return self.X_train
+    
+    def update_pi_ratings(self, row, pi_ratings_manager: PiRatingsManager, pi_ratings_calculator: PiRatingsCalculator) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        pi_ratings_manager.update_pi_ratings(row, pi_ratings_calculator)
+        pi_ratings_manager.update_pi_pairwise(row, pi_ratings_calculator)
+        pi_ratings_manager.update_pi_weighted(row)
+
+        return pi_ratings_manager.get_pi_ratings(), pi_ratings_manager.get_pi_pairwise(), pi_ratings_manager.get_pi_weighted()
+    
+    def update_individual_stats(self, row, individual_stats_manager: IndividualTeamStats) -> pd.DataFrame:
+        individual_stats_manager.compute_team_stats(row)
+        return individual_stats_manager.generate_features_dataframe()

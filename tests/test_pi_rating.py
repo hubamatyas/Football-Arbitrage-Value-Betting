@@ -3,7 +3,7 @@ import math
 
 from data.load_csv import DataLoader
 from data.process import DataProcessor
-from features.pi_rating import PiRatingsCalculator, RatingsManager
+from features.pi_rating import PiRatingsCalculator, PiRatingsManager
 from data.utils import Season
 
 def test_calc_pi_ratings_update():
@@ -16,7 +16,7 @@ def test_calc_pi_ratings_update():
     df = data_loader.get_df()
     data_processor = DataProcessor(df)
     calculator = PiRatingsCalculator()
-    manager = RatingsManager(df)
+    manager = PiRatingsManager(df)
     manager.update_match_ratings(calculator)
 
     sample_pi_rating = manager.pi_ratings.loc[(manager.pi_ratings['Team'] == 'Man United') | (manager.pi_ratings['Team'] == 'Man City')]
@@ -44,7 +44,7 @@ def test_calc_pairwise_pi_update():
     df = data_loader.get_df()
     data_processor = DataProcessor(df)
     calculator = PiRatingsCalculator()
-    manager = RatingsManager(df)
+    manager = PiRatingsManager(df)
     manager.update_match_ratings(calculator)
 
     sample_pi_pairwise = manager.pi_pairwise.loc[(manager.pi_pairwise['HomeTeam'] == 'Man United') & (manager.pi_pairwise['AwayTeam'] == 'Man City') | (manager.pi_pairwise['HomeTeam'] == 'Man City') & (manager.pi_pairwise['AwayTeam'] == 'Man United')]

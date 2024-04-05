@@ -41,66 +41,62 @@ class IndividualTeamStats:
     def init_teams_dict_with_list(self) -> dict:
         return {team: [] for team in self.unique_teams}
     
-    def compute_team_stats(self):
-        for _, row in self.reversed_df.iterrows():
-            if pd.isnull(row['HomeTeam']):
-                continue
+    def compute_team_stats(self, row):
+        if row['FTR'] == "H":
+            self.team_wins[row["HomeTeam"]] += 1
+            self.team_losses[row["AwayTeam"]] += 1
+            self.team_home_wins[row["HomeTeam"]] += 1
+            self.team_away_losses[row["AwayTeam"]] += 1
+        elif row['FTR'] == "A":
+            self.team_wins[row["AwayTeam"]] += 1
+            self.team_losses[row["HomeTeam"]] += 1
+            self.team_away_wins[row["AwayTeam"]] += 1
+            self.team_home_losses[row["HomeTeam"]] += 1
+        elif row['FTR'] == "D":
+            self.team_draws[row['HomeTeam']] += 1
+            self.team_draws[row['AwayTeam']] += 1
+            self.team_home_draws[row['HomeTeam']] += 1
+            self.team_away_draws[row['AwayTeam']] += 1
 
-            if row['FTR'] == "H":
-                self.team_wins[row["HomeTeam"]] += 1
-                self.team_losses[row["AwayTeam"]] += 1
-                self.team_home_wins[row["HomeTeam"]] += 1
-                self.team_away_losses[row["AwayTeam"]] += 1
-            elif row['FTR'] == "A":
-                self.team_wins[row["AwayTeam"]] += 1
-                self.team_losses[row["HomeTeam"]] += 1
-                self.team_away_wins[row["AwayTeam"]] += 1
-                self.team_home_losses[row["HomeTeam"]] += 1
-            elif row['FTR'] == "D":
-                self.team_draws[row['HomeTeam']] += 1
-                self.team_draws[row['AwayTeam']] += 1
-                self.team_home_draws[row['HomeTeam']] += 1
-                self.team_away_draws[row['AwayTeam']] += 1
+        self.team_goals[row['HomeTeam']] += row['FTHG']
+        self.team_goals[row['AwayTeam']] += row['FTAG']
 
-            self.team_goals[row['HomeTeam']] += row['FTHG']
-            self.team_goals[row['AwayTeam']] += row['FTAG']
+        self.team_conceded[row['HomeTeam']] += row['FTAG']
+        self.team_conceded[row['AwayTeam']] += row['FTHG']
 
-            self.team_conceded[row['HomeTeam']] += row['FTAG']
-            self.team_conceded[row['AwayTeam']] += row['FTHG']
+        self.team_half_time_goals[row['HomeTeam']] += row['HTHG']
+        self.team_half_time_goals[row['AwayTeam']] += row['HTAG']
 
-            self.team_half_time_goals[row['HomeTeam']] += row['HTHG']
-            self.team_half_time_goals[row['AwayTeam']] += row['HTAG']
+        self.team_shots_on_goal[row['HomeTeam']] += row['HS']
+        self.team_shots_on_goal[row['AwayTeam']] += row['AS']
 
-            self.team_shots_on_goal[row['HomeTeam']] += row['HS']
-            self.team_shots_on_goal[row['AwayTeam']] += row['AS']
+        self.team_shots_on_target[row['HomeTeam']] += row['HST']
+        self.team_shots_on_target[row['AwayTeam']] += row['AST']
 
-            self.team_shots_on_target[row['HomeTeam']] += row['HST']
-            self.team_shots_on_target[row['AwayTeam']] += row['AST']
+        self.team_yellow_cards[row['HomeTeam']] += row['HY']
+        self.team_yellow_cards[row['AwayTeam']] += row['AY']
 
-            self.team_yellow_cards[row['HomeTeam']] += row['HY']
-            self.team_yellow_cards[row['AwayTeam']] += row['AY']
+        self.team_red_cards[row['HomeTeam']] += row['HR']
+        self.team_red_cards[row['AwayTeam']] += row['AR']
 
-            self.team_red_cards[row['HomeTeam']] += row['HR']
-            self.team_red_cards[row['AwayTeam']] += row['AR']
+        self.team_corners[row['HomeTeam']] += row['HC']
+        self.team_corners[row['AwayTeam']] += row['AC']
 
-            self.team_corners[row['HomeTeam']] += row['HC']
-            self.team_corners[row['AwayTeam']] += row['AC']
+        self.team_fouls[row['HomeTeam']] += row['HF']
+        self.team_fouls[row['AwayTeam']] += row['AF']
 
-            self.team_fouls[row['HomeTeam']] += row['HF']
-            self.team_fouls[row['AwayTeam']] += row['AF']
+        self.team_seasons[row['HomeTeam']].add(row['Date'].year)
+        self.team_seasons[row['AwayTeam']].add(row['Date'].year)
 
-            self.team_seasons[row['HomeTeam']].add(row['Date'].year)
-            self.team_seasons[row['AwayTeam']].add(row['Date'].year)
+        if len(self.team_last_n_matches[row['HomeTeam']]) < self.last_n_matches:
+            self.team_last_n_matches[row['HomeTeam']].append(row)
+            self.team_last_n_matches_goals[row['HomeTeam']] += row['FTHG']
+            self.team_last_n_matches_goal_diff[row['HomeTeam']] += row['FTHG'] - row['FTAG']
 
-            if len(self.team_last_n_matches[row['HomeTeam']]) < self.last_n_matches:
-                self.team_last_n_matches[row['HomeTeam']].append(row)
-                self.team_last_n_matches_goals[row['HomeTeam']] += row['FTHG']
-                self.team_last_n_matches_goal_diff[row['HomeTeam']] += row['FTHG'] - row['FTAG']
-
-            if len(self.team_last_n_matches[row['AwayTeam']]) < self.last_n_matches:
-                self.team_last_n_matches[row['AwayTeam']].append(row)
-                self.team_last_n_matches_goals[row['AwayTeam']] += row['FTAG']
-                self.team_last_n_matches_goal_diff[row['AwayTeam']] += row['FTAG'] - row['FTHG']
+        if len(self.team_last_n_matches[row['AwayTeam']]) < self.last_n_matches:
+            self.team_last_n_matches[row['AwayTeam']].append(row)
+            self.team_last_n_matches_goals[row['AwayTeam']] += row['FTAG']
+            self.team_last_n_matches_goal_diff[row['AwayTeam']] += row['FTAG'] - row['FTHG']
 
     def generate_features_dataframe(self) -> pd.DataFrame:
         data = {
@@ -165,5 +161,7 @@ class IndividualTeamStats:
         return pd.DataFrame(data)
     
     def compute(self) -> pd.DataFrame:
-        self.compute_team_stats()
+        for _, row in self.reversed_df.iterrows():
+            self.compute_team_stats(row)
+
         return self.generate_features_dataframe()

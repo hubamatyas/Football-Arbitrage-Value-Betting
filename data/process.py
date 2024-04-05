@@ -14,8 +14,7 @@ class DataProcessor:
         if not validation:
             df_train, df_test = np.split(self.df, [int(train_test_ratio * len(self.df))])
             return df_train, df_test
-        
         else:
             df_train, df_test = np.split(self.df, [int(train_test_ratio * len(self.df))])
-            df_train, df_val = np.split(df_train, [int(test_val_ratio * len(df_train))])
+            df_test, df_val = np.split(df_test, [int(test_val_ratio * len(df_test))])
             return df_train, df_test, df_val
