@@ -58,50 +58,56 @@ class XTableConstructor:
             row = self.add_pi_weighted(row, home_team_weighted_pi, away_team_weighted_pi)
 
         return row
+
+    def divide(self, x_dict, y_dict, x_label, y_label):
+        return x_dict[x_label].values[0] / y_dict[y_label].values[0] if y_dict[y_label].values[0] != 0 else 0
     
+    def get_value(self, df, column):
+        return df[column].values[0] if not df.empty else 0
+
     def add_result_percentage(self, row, home_team_stats, away_team_stats):
-        row['HT_Win%'] = home_team_stats['Wins'].values[0] / home_team_stats['NumOfMatches'].values[0]
-        row['AT_Win%'] = away_team_stats['Wins'].values[0] / away_team_stats['NumOfMatches'].values[0]
-        row['HT_Draw%'] = home_team_stats['Draws'].values[0] / home_team_stats['NumOfMatches'].values[0]
-        row['AT_Draw%'] = away_team_stats['Draws'].values[0] / away_team_stats['NumOfMatches'].values[0]
-        row['HT_Loss%'] = home_team_stats['Losses'].values[0] / home_team_stats['NumOfMatches'].values[0]
-        row['AT_Loss%'] = away_team_stats['Losses'].values[0] / away_team_stats['NumOfMatches'].values[0]
+        row['HT_Win%'] = self.divide(home_team_stats, home_team_stats, 'Wins', 'NumOfMatches')
+        row['AT_Win%'] = self.divide(away_team_stats, away_team_stats, 'Wins', 'NumOfMatches')
+        row['HT_Draw%'] = self.divide(home_team_stats, home_team_stats, 'Draws', 'NumOfMatches')
+        row['AT_Draw%'] = self.divide(away_team_stats, away_team_stats, 'Draws', 'NumOfMatches')
+        row['HT_Loss%'] = self.divide(home_team_stats, home_team_stats, 'Losses', 'NumOfMatches')
+        row['AT_Loss%'] = self.divide(away_team_stats, away_team_stats, 'Losses', 'NumOfMatches')
 
         return row
     
     def add_home_away_result_percentage(self, row, home_team_stats, away_team_stats):
-        row['HT_HomeWin%'] = home_team_stats['HomeWins'].values[0] / home_team_stats['NumOfHomeMatches'].values[0]
-        row['AT_AwayWin%'] = away_team_stats['AwayWins'].values[0] / away_team_stats['NumOfAwayMatches'].values[0]
-        row['HT_HomeDraw%'] = home_team_stats['HomeDraws'].values[0] / home_team_stats['NumOfHomeMatches'].values[0]
-        row['AT_AwayDraw%'] = away_team_stats['AwayDraws'].values[0] / away_team_stats['NumOfAwayMatches'].values[0]
-        row['HT_HomeLoss%'] = home_team_stats['HomeLosses'].values[0] / home_team_stats['NumOfHomeMatches'].values[0]
-        row['AT_AwayLoss%'] = away_team_stats['AwayLosses'].values[0] / away_team_stats['NumOfAwayMatches'].values[0]
+        row['HT_HomeWin%'] = self.divide(home_team_stats, home_team_stats, 'HomeWins', 'NumOfHomeMatches')
+        row['AT_AwayWin%'] = self.divide(away_team_stats, away_team_stats, 'AwayWins', 'NumOfAwayMatches')
+        row['HT_HomeDraw%'] = self.divide(home_team_stats, home_team_stats, 'HomeDraws', 'NumOfHomeMatches')
+        row['AT_AwayDraw%'] = self.divide(away_team_stats, away_team_stats, 'AwayDraws', 'NumOfAwayMatches')
+        row['HT_HomeLoss%'] = self.divide(home_team_stats, home_team_stats, 'HomeLosses', 'NumOfHomeMatches')
+        row['AT_AwayLoss%'] = self.divide(away_team_stats, away_team_stats, 'AwayLosses', 'NumOfAwayMatches')
 
         return row
     
     def add_shooting_stats(self, row, home_team_stats, away_team_stats):
-        row['HT_ShotOnGoalPerMatch'] = home_team_stats['ShotsOnGoal'].values[0] / home_team_stats['NumOfMatches'].values[0]
-        row['AT_ShotOnGoalPerMatch'] = away_team_stats['ShotsOnGoal'].values[0] / away_team_stats['NumOfMatches'].values[0]
-        row['HT_ShotOnTargetPerMatch'] = home_team_stats['ShotsOnTarget'].values[0] / home_team_stats['NumOfMatches'].values[0]
-        row['AT_ShotOnTargetPerMatch'] = away_team_stats['ShotsOnTarget'].values[0] / away_team_stats['NumOfMatches'].values[0]
-        row['HT_ShotOnTargetAccuracy'] = home_team_stats['ShotsOnTarget'].values[0] / home_team_stats['ShotsOnGoal'].values[0]
-        row['AT_ShotOnTargetAccuracy'] = away_team_stats['ShotsOnTarget'].values[0] / away_team_stats['ShotsOnGoal'].values[0]
+        row['HT_ShotOnGoalPerMatch'] = self.divide(home_team_stats, home_team_stats, 'ShotsOnGoal', 'NumOfMatches')
+        row['AT_ShotOnGoalPerMatch'] = self.divide(away_team_stats, away_team_stats, 'ShotsOnGoal', 'NumOfMatches')
+        row['HT_ShotOnTargetPerMatch'] = self.divide(home_team_stats, home_team_stats, 'ShotsOnTarget', 'NumOfMatches')
+        row['AT_ShotOnTargetPerMatch'] = self.divide(away_team_stats, away_team_stats, 'ShotsOnTarget', 'NumOfMatches')
+        row['HT_ShotOnTargetAccuracy'] = self.divide(home_team_stats, home_team_stats, 'ShotsOnTarget', 'ShotsOnGoal')
+        row['AT_ShotOnTargetAccuracy'] = self.divide(away_team_stats, away_team_stats, 'ShotsOnTarget', 'ShotsOnGoal')
 
         return row
     
     def add_goal_stats(self, row, home_team_stats, away_team_stats):
-        row['HT_GoalAccuracy'] = home_team_stats['Goals'].values[0] / home_team_stats['ShotsOnTarget'].values[0]
-        row['AT_GoalAccuracy'] = away_team_stats['Goals'].values[0] / away_team_stats['ShotsOnTarget'].values[0]
-        row['HT_GoalsPerMatch'] = home_team_stats['Goals'].values[0] / home_team_stats['NumOfMatches'].values[0]
-        row['AT_GoalsPerMatch'] = away_team_stats['Goals'].values[0] / away_team_stats['NumOfMatches'].values[0]
-        row['HT_HalfTimeGoalsPerMatch'] = home_team_stats['HalfTimeGoals'].values[0] / home_team_stats['NumOfMatches'].values[0]
-        row['AT_HalfTimeGoalsPerMatch'] = away_team_stats['HalfTimeGoals'].values[0] / away_team_stats['NumOfMatches'].values[0]
+        row['HT_GoalAccuracy'] = self.divide(home_team_stats, home_team_stats, 'Goals', 'ShotsOnTarget')
+        row['AT_GoalAccuracy'] = self.divide(away_team_stats, away_team_stats, 'Goals', 'ShotsOnTarget')
+        row['HT_GoalsPerMatch'] = self.divide(home_team_stats, home_team_stats, 'Goals', 'NumOfMatches')
+        row['AT_GoalsPerMatch'] = self.divide(away_team_stats, away_team_stats, 'Goals', 'NumOfMatches')
+        row['HT_HalfTimeGoalsPerMatch'] = self.divide(home_team_stats, home_team_stats, 'HalfTimeGoals', 'NumOfMatches')
+        row['AT_HalfTimeGoalsPerMatch'] = self.divide(away_team_stats, away_team_stats, 'HalfTimeGoals', 'NumOfMatches')
 
         return row
     
     def add_conceded_stats(self, row, home_team_stats, away_team_stats):
-        row['HT_GoalsConcededPerMatch'] = home_team_stats['Conceded'].values[0] / home_team_stats['NumOfMatches'].values[0]
-        row['AT_GoalsConcededPerMatch'] = away_team_stats['Conceded'].values[0] / away_team_stats['NumOfMatches'].values[0]
+        row['HT_GoalsConcededPerMatch'] = self.divide(home_team_stats, home_team_stats, 'Conceded', 'NumOfMatches')
+        row['AT_GoalsConcededPerMatch'] = self.divide(away_team_stats, away_team_stats, 'Conceded', 'NumOfMatches')
 
         return row
     
@@ -114,26 +120,26 @@ class XTableConstructor:
         return row
     
     def add_pi_ratings(self, row, home_team_pi, away_team_pi):
-        row['HT_HomeRating'] = home_team_pi['HomeRating'].values[0]
-        row['HT_AwayRating'] = home_team_pi['AwayRating'].values[0]
-        row['AT_HomeRating'] = away_team_pi['HomeRating'].values[0]
-        row['AT_AwayRating'] = away_team_pi['AwayRating'].values[0]
+        row['HT_HomeRating'] = self.get_value(home_team_pi, 'HomeRating')
+        row['HT_AwayRating'] = self.get_value(home_team_pi, 'AwayRating')
+        row['AT_HomeRating'] = self.get_value(away_team_pi, 'HomeRating')
+        row['AT_AwayRating'] = self.get_value(away_team_pi, 'AwayRating')
 
         return row
     
     def add_pi_pairwise(self, row, home_team_pairwise_pi, away_team_pairwise_pi):
-        row['PWHT_HomeRating'] = home_team_pairwise_pi['HomeRating'].values[0]
-        row['PWHT_AwayRating'] = home_team_pairwise_pi['AwayRating'].values[0]
-        row['PWAT_HomeRating'] = away_team_pairwise_pi['HomeRating'].values[0]
-        row['PWAT_AwayRating'] = away_team_pairwise_pi['AwayRating'].values[0]
+        row['PWHT_HomeRating'] = self.get_value(home_team_pairwise_pi, 'HomeRating')
+        row['PWHT_AwayRating'] = self.get_value(home_team_pairwise_pi, 'AwayRating')
+        row['PWAT_HomeRating'] = self.get_value(away_team_pairwise_pi, 'HomeRating')
+        row['PWAT_AwayRating'] = self.get_value(away_team_pairwise_pi, 'AwayRating')
 
         return row
     
     def add_pi_weighted(self, row, home_team_weighted_pi, away_team_weighted_pi):
-        row['WPWHT_HomeRating'] = home_team_weighted_pi['HomeRating'].values[0]
-        row['WPWHT_AwayRating'] = home_team_weighted_pi['AwayRating'].values[0]
-        row['WPWAT_HomeRating'] = away_team_weighted_pi['HomeRating'].values[0]
-        row['WPWAT_AwayRating'] = away_team_weighted_pi['AwayRating'].values[0]
+        row['WPWHT_HomeRating'] = self.get_value(home_team_weighted_pi, 'HomeRating')
+        row['WPWHT_AwayRating'] = self.get_value(home_team_weighted_pi, 'AwayRating')
+        row['WPWAT_HomeRating'] = self.get_value(away_team_weighted_pi, 'HomeRating')
+        row['WPWAT_AwayRating'] = self.get_value(away_team_weighted_pi, 'AwayRating')
 
         return row
         
