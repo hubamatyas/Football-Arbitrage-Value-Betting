@@ -31,103 +31,36 @@ from sklearn.linear_model import LogisticRegression
 
 import shap
 
-def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.DataFrame, y_test: pd.Series=None):
-    model = xgb.XGBClassifier(objective='multi:softmax', num_class=3)
+def train_model(model, name, X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.DataFrame, y_test: pd.Series=None):
     model.fit(X_train, y_train)
 
     y_pred = model.predict(X_test)
-    print('XGBoost:')
 
-    if y_test is None:
-        y_test = pd.DataFrame()
-        y_test['FTR'] = y_pred
-        y_test['FTR'] = y_test['FTR'].map({0: 'H', 1: 'A', 2: 'D'})
-        print(y_test)
-        return model
-    
-    print('Accuracy:', accuracy_score(y_test, y_pred))
-    print('F1 Score:', f1_score(y_test, y_pred, average='macro'))
-    print('Precision:', precision_score(y_test, y_pred, average='macro'))
-    print('Recall:', recall_score(y_test, y_pred, average='macro'))
-    print(y_pred)
-    print()
-
-    return model
-
-def train_random_forest(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.DataFrame, y_test: pd.Series=None):
-    model = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=1)
-    model.fit(X_train, y_train)
-
-    y_pred = model.predict(X_test)
-    print('Random Forest:')
-
-    if y_test is None:
-        y_test = pd.DataFrame()
-        y_test['FTR'] = y_pred
-        y_test['FTR'] = y_test['FTR'].map({0: 'H', 1: 'A', 2: 'D'})
-        print(y_test)
-        return model
-    
-    print('Accuracy:', accuracy_score(y_test, y_pred))
-    print('F1 Score:', f1_score(y_test, y_pred, average='macro'))
-    print('Precision:', precision_score(y_test, y_pred, average='macro'))
-    print('Recall:', recall_score(y_test, y_pred, average='macro'))
-    print(y_pred)
-    print()
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(X_train)
-    shap.initjs()
-    shap.summary_plot(shap_values, X_train, plot_type='bar')
-
-    return model
-
-def train_logistic_regression(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.DataFrame, y_test: pd.Series=None):
-    model = LogisticRegression(max_iter=1000)
-    model.fit(X_train, y_train)
-
-    y_pred = model.predict(X_test)
-    print('Logistic Regression:')
-
-    if y_test is None:
-        y_test = pd.DataFrame()
-        y_test['FTR'] = y_pred
-        y_test['FTR'] = y_test['FTR'].map({0: 'H', 1: 'A', 2: 'D'})
-        print(y_test)
-        return model
-    
-    print('Accuracy:', accuracy_score(y_test, y_pred))
-    print('F1 Score:', f1_score(y_test, y_pred, average='macro'))
-    print('Precision:', precision_score(y_test, y_pred, average='macro'))
-    print('Recall:', recall_score(y_test, y_pred, average='macro'))
-    print(y_pred)
-    print()
-
-    return model
-
-def train_catboost(X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.DataFrame, y_test: pd.Series=None):
-    model = CatBoostClassifier(iterations=1000, depth=5, learning_rate=0.1, loss_function='MultiClass')
-    model.set_params(logging_level='Silent')
-    model.fit(X_train, y_train)
-
-    y_pred = model.predict(X_test)
-    print('CatBoost:')
-
-    if y_test is None:
+    if name == 'CatBoost':
         y_pred = [int(x) for x in y_pred]
-        y_test = pd.DataFrame()
-        y_test['FTR'] = y_pred
-        y_test['FTR'] = y_test['FTR'].map({0: 'H', 1: 'A', 2: 'D'})
-        print(y_test)
-        return model
+
+    # k-fold cross validation
+    kfold = KFold(n_splits=10, random_state=7, shuffle=True)
+    results = cross_val_score(model, X_train, y_train, cv=kfold)
+
+    print(name + ':')
+    print(y_pred)
+
+    if y_test is None:
+        return
     
     print('Accuracy:', accuracy_score(y_test, y_pred))
     print('F1 Score:', f1_score(y_test, y_pred, average='macro'))
     print('Precision:', precision_score(y_test, y_pred, average='macro'))
     print('Recall:', recall_score(y_test, y_pred, average='macro'))
-    print(y_pred)
+    print(f'Cross Validation Accuracy: mean={round(results.mean(), 5)}, std={round(results.std(), 5)}')
     print()
+    # explainer = shap.TreeExplainer(model)
+    # shap_values = explainer.shap_values(X_train)
+    # shap.initjs()
+    # shap.summary_plot(shap_values, X_train, plot_type='bar')
 
-    return model
+    return y_pred
 
 def read_test_csv():
     final_test_df = pd.read_csv('epl-test.csv')
@@ -136,10 +69,8 @@ def read_test_csv():
     # Convert date to datetime
     for index, row in final_test_df.iterrows():
         date = row['Date'].split('-')
-        # print(date[-1])
         if len(date[-1]) == 2:
             final_test_df.at[index, 'Date'] = f'{date[0]}/{date[1]}/20{date[-1]}'
-            # print(final_test_df.at[index, 'Date'])
 
     # Match team names to the ones used in the training set
     final_test_df = final_test_df.replace("Spurs", "Tottenham")
@@ -179,7 +110,15 @@ if __name__ == '__main__':
 
     # do cross validation
     # y_test = None
-    model = train_random_forest(X_train, y_train, X_test, y_test)
-    model = train_logistic_regression(X_train, y_train, X_test, y_test)
-    model = train_xgboost(X_train, y_train, X_test, y_test)
-    model = train_catboost(X_train, y_train, X_test, y_test)
+    log_reg = LogisticRegression(max_iter=1000)
+    log_reg = train_model(log_reg, 'Logistic Regression', X_train, y_train, X_test, y_test)
+
+    rf = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=1)
+    rf = train_model(rf, 'Random Forest', X_train, y_train, X_test, y_test)
+
+    xgboost = xgb.XGBClassifier(objective='multi:softmax', num_class=3)
+    xgboost = train_model(xgboost, 'XGBoost', X_train, y_train, X_test, y_test)
+
+    catboost = CatBoostClassifier(iterations=1000, depth=5, learning_rate=0.1, loss_function='MultiClass')
+    catboost.set_params(logging_level='Silent')
+    catboost = train_model(catboost, 'CatBoost', X_train, y_train, X_test, y_test)
