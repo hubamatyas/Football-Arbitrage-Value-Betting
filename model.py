@@ -6,7 +6,7 @@ from datetime import datetime
 from utils.data_utils import Season
 from utils.model_utils import Feature
 from data.load_csv import DataLoader
-from data.process import DataProcessor
+from data.process import DataProcessor, DataSet
 from features.pi_rating import PiRatingsCalculator, PiRatingsManager
 from features.individual_stats import IndividualTeamStats
 from features.pairwise_stats import PairwiseTeamStats
@@ -58,16 +58,12 @@ def train_model(model, name, X_train: pd.DataFrame, y_train: pd.Series, X_test: 
 
     print(name + ':')
     print(y_pred)
-
-    if y_test is None:
-        return
     
     print('Accuracy:', accuracy_score(y_test, y_pred))
     print('F1 Score:', f1_score(y_test, y_pred, average='macro'))
     print('Precision:', precision_score(y_test, y_pred, average='macro'))
     print('Recall:', recall_score(y_test, y_pred, average='macro'))
-    print(f'Cross Validation Accuracy: mean={round(results.mean(), 5)}, std={round(results.std(), 5)}')
-    print()
+    print(f'Cross Validation Accuracy: mean={round(results.mean(), 5)}, std={round(results.std(), 5)}\n')
 
     # explainer = shap.TreeExplainer(model)
     # shap_values = explainer.shap_values(X_train)
@@ -76,17 +72,16 @@ def train_model(model, name, X_train: pd.DataFrame, y_train: pd.Series, X_test: 
 
     return y_pred
 
-if __name__ == '__main__':
-    dataset_path = 'epl-training.csv'
-    season = Season.Past1
-
+def pre_process_data(dataset_path, season) -> tuple[DataSet, DataSet, list[str]]:
     df = DataLoader(dataset_path, season).load()
     data_processor = DataProcessor(df)
     unique_teams = data_processor.get_unique_teams()
     # df_train, df_test = data_processor.split_data(train_test_ratio=0.95)
     train, test = data_processor.split_data_last_n(n=10)
-    feature_params = get_feature_params()
 
+    return train, test, unique_teams
+
+def feature_engineering(train: DataSet, test: DataSet, unique_teams, feature_params):
     X_train = XTrainConstructor(train.X, unique_teams, **feature_params).construct_table()
     X_train = XTableEncoder(X_train).run()
     y_train = YSeriesEncoder(train.y).run()
@@ -97,7 +92,12 @@ if __name__ == '__main__':
 
     X_train, X_test = CrossChecker(X_train, X_test).run()
 
-    # y_test = None
+    return X_train, y_train, X_test, y_test
+
+def run(dataset_path, season, feature_params=get_feature_params()):
+    train, test, unique_teams = pre_process_data(dataset_path, season)
+    X_train, y_train, X_test, y_test = feature_engineering(train, test, unique_teams, feature_params)
+
     lr = LogisticRegression(max_iter=1000)
     lr = train_model(lr, 'Logistic Regression', X_train, y_train, X_test, y_test)
 
