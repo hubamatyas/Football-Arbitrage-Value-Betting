@@ -68,34 +68,13 @@ def train_model(model, name, X_train: pd.DataFrame, y_train: pd.Series, X_test: 
     print('Recall:', recall_score(y_test, y_pred, average='macro'))
     print(f'Cross Validation Accuracy: mean={round(results.mean(), 5)}, std={round(results.std(), 5)}')
     print()
+
     # explainer = shap.TreeExplainer(model)
     # shap_values = explainer.shap_values(X_train)
     # shap.initjs()
     # shap.summary_plot(shap_values, X_train, plot_type='bar')
 
     return y_pred
-
-def read_test_csv():
-    final_test_df = pd.read_csv('epl-test.csv')
-    final_test_df = final_test_df.dropna(how='all')
-
-    # Convert date to datetime
-    for index, row in final_test_df.iterrows():
-        date = row['Date'].split('-')
-        if len(date[-1]) == 2:
-            final_test_df.at[index, 'Date'] = f'{date[0]}/{date[1]}/20{date[-1]}'
-
-    # Match team names to the ones used in the training set
-    final_test_df = final_test_df.replace("Spurs", "Tottenham")
-    final_test_df = final_test_df.replace("Nottingham Forest", "Nott'm Forest")
-    final_test_df = final_test_df.replace("AFC Bournemouth", "Bournemouth")
-    final_test_df = final_test_df.replace("Man Utd", "Man United")
-    final_test_df = final_test_df.replace("Luton Town", "Luton")
-    final_test_df = final_test_df.replace("Sheff Utd", "Sheffield United")
-
-    final_test_df['Date'] = pd.to_datetime(final_test_df['Date'], format='mixed')
-    final_test_df = final_test_df.sort_values(by=['Date'])
-    return final_test_df
 
 if __name__ == '__main__':
     dataset_path = 'epl-training.csv'
@@ -105,20 +84,16 @@ if __name__ == '__main__':
     data_processor = DataProcessor(df)
     unique_teams = data_processor.get_unique_teams()
     # df_train, df_test = data_processor.split_data(train_test_ratio=0.95)
-    df_train, df_test = data_processor.split_data_last_n(n=10)
-    # df_test = read_test_csv()
-    print(len(df_train), len(df_test))
+    train, test = data_processor.split_data_last_n(n=10)
     feature_params = get_feature_params()
 
-    X_train = XTrainConstructor(df_train, unique_teams, **feature_params).construct_table()
-    y_train = df_train['FTR']
+    X_train = XTrainConstructor(train.X, unique_teams, **feature_params).construct_table()
     X_train = XTableEncoder(X_train).run()
-    y_train = YSeriesEncoder(y_train).run()
+    y_train = YSeriesEncoder(train.y).run()
 
-    X_test = XTestConstructor(df_test, df_train, unique_teams, **feature_params).construct_table()
-    y_test = df_test['FTR']
+    X_test = XTestConstructor(test.X, train.X, unique_teams, **feature_params).construct_table()
     X_test = XTableEncoder(X_test).run()
-    y_test = YSeriesEncoder(y_test).run()
+    y_test = YSeriesEncoder(test.y).run()
 
     X_train, X_test = CrossChecker(X_train, X_test).run()
 
