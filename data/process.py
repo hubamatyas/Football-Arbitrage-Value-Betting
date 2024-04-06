@@ -18,3 +18,8 @@ class DataProcessor:
             df_train, df_test = np.split(self.df, [int(train_test_ratio * len(self.df))])
             df_test, df_val = np.split(df_test, [int(test_val_ratio * len(df_test))])
             return df_train, df_test, df_val
+        
+    def split_data_last_n(self, n=10) -> tuple:
+        df_train = self.df[:-n]
+        df_test = self.df[-n:]
+        return df_train, df_test

@@ -17,12 +17,12 @@ class XTableConstructor:
             'AT': away_team,
         }
 
-        row = self.add_result_percentage(row, home_team_stats, away_team_stats)
-        row = self.add_home_away_result_percentage(row, home_team_stats, away_team_stats)
-        row = self.add_shooting_stats(row, home_team_stats, away_team_stats)
-        row = self.add_goal_stats(row, home_team_stats, away_team_stats)
-        row = self.add_conceded_stats(row, home_team_stats, away_team_stats)
-        row = self.add_last_n_matches_stats(row, home_team_stats, away_team_stats)
+        # row = self.add_result_percentage(row, home_team_stats, away_team_stats)
+        # row = self.add_home_away_result_percentage(row, home_team_stats, away_team_stats)
+        # row = self.add_shooting_stats(row, home_team_stats, away_team_stats)
+        # row = self.add_goal_stats(row, home_team_stats, away_team_stats)
+        # row = self.add_conceded_stats(row, home_team_stats, away_team_stats)
+        # row = self.add_last_n_matches_stats(row, home_team_stats, away_team_stats)
 
         if self.is_pi_ratings:
             row = self.add_pi_ratings(row, home_team_pi, away_team_pi)
@@ -120,14 +120,15 @@ class XTableConstructor:
         return row
 
 class XTestConstructor(XTableConstructor):
-    def __init__(self, df, unique_teams, is_pairwise_stats=False, is_pi_ratings=True, is_pi_pairwise=True, is_pi_weighted=True):
+    def __init__(self, df, df_train, unique_teams, is_pairwise_stats=False, is_pi_ratings=True, is_pi_pairwise=True, is_pi_weighted=True):
         super().__init__(is_pairwise_stats, is_pi_ratings, is_pi_pairwise, is_pi_weighted)
         self.df: pd.DataFrame = df
+        self.df_train: pd.DataFrame = df_train
         self.X_test: pd.DataFrame = pd.DataFrame()
         self.unique_teams: list[str] = unique_teams
 
-        self.pi_ratings, self.pi_pairwise, self.pi_weighted = PiRatingsManager(self.df, self.unique_teams).compute()
-        self.individual_stats = IndividualTeamStats(self.df, self.unique_teams).compute()
+        self.pi_ratings, self.pi_pairwise, self.pi_weighted = PiRatingsManager(self.df_train, self.unique_teams).compute()
+        self.individual_stats = IndividualTeamStats(self.df_train, self.unique_teams).compute()
         # self.pairwise_stats = PairwiseTeamStats(self.df, self.unique_teams, self.individual_stats).compute()
 
     def construct_table(self) -> pd.DataFrame:
