@@ -3,7 +3,8 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 
-from data.utils import Season
+from utils.data_utils import Season
+from utils.model_utils import Feature
 from data.load_csv import DataLoader
 from data.process import DataProcessor
 from features.pi_rating import PiRatingsCalculator, PiRatingsManager
@@ -31,13 +32,25 @@ from sklearn.linear_model import LogisticRegression
 
 import shap
 
+def get_feature_params():
+    return {
+        Feature.GOAL_STATS.value: False,
+        Feature.SHOOTING_STATS.value: False,
+        Feature.RESULT.value: False,
+        Feature.HOME_AWAY_RESULTS.value: False,
+        Feature.CONCEDED_STATS.value: False,
+        Feature.LAST_N_MATCHES.value: False,
+        Feature.WIN_STREAK.value: False,
+        Feature.PAIRWISE_STATS.value: False,
+        Feature.PI_RATINGS.value: True,
+        Feature.PI_PAIRWISE.value: False,
+        Feature.PI_WEIGHTED.value: False
+    }
+
 def train_model(model, name, X_train: pd.DataFrame, y_train: pd.Series, X_test: pd.DataFrame, y_test: pd.Series=None):
     model.fit(X_train, y_train)
 
     y_pred = model.predict(X_test)
-
-    if name == 'CatBoost':
-        y_pred = [int(x) for x in y_pred]
 
     # k-fold cross validation
     kfold = KFold(n_splits=10, random_state=7, shuffle=True)
@@ -95,23 +108,23 @@ if __name__ == '__main__':
     df_train, df_test = data_processor.split_data_last_n(n=10)
     # df_test = read_test_csv()
     print(len(df_train), len(df_test))
+    feature_params = get_feature_params()
 
-    X_train = XTrainConstructor(df_train, unique_teams, is_pairwise_stats=False, is_pi_ratings=True, is_pi_pairwise=False, is_pi_weighted=False).construct_table()
+    X_train = XTrainConstructor(df_train, unique_teams, **feature_params).construct_table()
     y_train = df_train['FTR']
     X_train = XTableEncoder(X_train).run()
     y_train = YSeriesEncoder(y_train).run()
 
-    X_test = XTestConstructor(df_test, df_train, unique_teams, is_pairwise_stats=False, is_pi_ratings=True, is_pi_pairwise=False, is_pi_weighted=False).construct_table()
+    X_test = XTestConstructor(df_test, df_train, unique_teams, **feature_params).construct_table()
     y_test = df_test['FTR']
     X_test = XTableEncoder(X_test).run()
     y_test = YSeriesEncoder(y_test).run()
 
     X_train, X_test = CrossChecker(X_train, X_test).run()
 
-    # do cross validation
     # y_test = None
-    log_reg = LogisticRegression(max_iter=1000)
-    log_reg = train_model(log_reg, 'Logistic Regression', X_train, y_train, X_test, y_test)
+    lr = LogisticRegression(max_iter=1000)
+    lr = train_model(lr, 'Logistic Regression', X_train, y_train, X_test, y_test)
 
     rf = RandomForestClassifier(n_estimators=100, max_depth=5, random_state=1)
     rf = train_model(rf, 'Random Forest', X_train, y_train, X_test, y_test)

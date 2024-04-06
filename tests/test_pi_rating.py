@@ -4,7 +4,7 @@ import math
 from data.load_csv import DataLoader
 from data.process import DataProcessor
 from features.pi_rating import PiRatingsCalculator, PiRatingsManager
-from data.utils import Season
+from utils.data_utils import Season
 
 def test_calc_pi_ratings_update():
     dataset_path = 'epl-training.csv'

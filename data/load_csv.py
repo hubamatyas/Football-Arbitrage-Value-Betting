@@ -1,5 +1,5 @@
 import pandas as pd
-from data.utils import Season
+from utils.data_utils import Season
 from datetime import datetime
 
 class DataLoader:
