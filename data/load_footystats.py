@@ -1,9 +1,12 @@
 import requests
 import pandas as pd
+from utils.data_utils import Season
+from data.clean import FootyStatsCleaner
+
+API_KEY = "5949038c3c3fd7cf68cc60652121fa9e1aa460abc96871aee7a4ddabe097d87b"
 
 class APIClient:
     """Football data API client"""
-
 
     def __init__(self, key):
         self.key = key
@@ -60,14 +63,21 @@ class LeagueDataClient(APIClient):
         return self._make_request('match', {'match_id': match_id})
     
 
-class GenDataFrame():
+class GenerateDataFrame():
     """General class for creating dataframes from API data"""
     
-    def __init__(self, client, league_name, country, years):
-        self.client = client
+    def __init__(self, league_name="Premier League", country="England", season: Season=Season.Past1):
+        self.client = LeagueDataClient(API_KEY)
         self.league_name = league_name
         self.country = country
-        self.years = years
+        self.years = self.get_years(season)
+
+    def get_years(self, season: Season):
+        first_season = season.value.year
+        last_season = 2023
+
+        return [str(year) for year in range(first_season, last_season + 1)]
+
 
     def get_league_list_df(self):
         response = self.client.get_league_list()
@@ -138,18 +148,24 @@ class GenDataFrame():
                 team_image_map[team_id] = team_data[0]['image']
         
         return team_image_map
+    
+    def get_complete_matches(self, df: pd.DataFrame):
+        return df[df['status'] == 'complete']
+    
+    def convert_and_sort_by_date(self, df: pd.DataFrame):
+        df['date'] = pd.to_datetime(df['date_unix'], unit='s')
+        df = df.sort_values('date')
 
-    def main(self):
-        return self.get_footystats_matches(self.league_name, self.country, self.years)
+        return df
 
-def main():
-    # TODO change to env variable
-    api_key = "5949038c3c3fd7cf68cc60652121fa9e1aa460abc96871aee7a4ddabe097d87b"
-    league_name = "Premier League"
-    country = "England"
-    years = ['2021']
-    # years =  ['2010','2011','2012','2013','2014','2015','2016','2017','2018','2019','2020','2021','2022','2023']
+    def load(self, is_save=False) -> pd.DataFrame:
+        df = self.get_footystats_matches(self.league_name, self.country, self.years)
 
-    client = LeagueDataClient(api_key)
-    df = GenDataFrame(client, league_name, country, years).main()
-    df.to_csv('footystats.csv', index=False)
+        if is_save:
+            df.to_csv('raw_footystats.csv', index=False)
+        
+        df = self.get_complete_matches(df)
+        df = self.convert_and_sort_by_date(df)
+        df = FootyStatsCleaner(df).run()
+
+        return df

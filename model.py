@@ -72,8 +72,7 @@ def train_model(model, name, X_train: pd.DataFrame, y_train: pd.Series, X_test: 
 
     return y_pred
 
-def pre_process_data(dataset_path, season) -> tuple[DataSet, DataSet, list[str]]:
-    df = DataLoader(dataset_path, season).load()
+def pre_process_data(df) -> tuple[DataSet, DataSet, list[str]]:
     data_processor = DataProcessor(df)
     unique_teams = data_processor.get_unique_teams()
     # df_train, df_test = data_processor.split_data(train_test_ratio=0.95)
@@ -94,8 +93,8 @@ def feature_engineering(train: DataSet, test: DataSet, unique_teams, feature_par
 
     return X_train, y_train, X_test, y_test
 
-def run(dataset_path, season, feature_params=get_feature_params()):
-    train, test, unique_teams = pre_process_data(dataset_path, season)
+def run(df, feature_params=get_feature_params()):
+    train, test, unique_teams = pre_process_data(df)
     X_train, y_train, X_test, y_test = feature_engineering(train, test, unique_teams, feature_params)
 
     lr = LogisticRegression(max_iter=1000)
