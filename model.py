@@ -36,7 +36,10 @@ def get_feature_params():
     return {
         Feature.GOAL_STATS.value: False,
         Feature.SHOOTING_STATS.value: False,
+        Feature.POSSESSION_STATS.value: False,
         Feature.RESULT.value: False,
+        Feature.ODDS.value: False,
+        Feature.XG.value: False,
         Feature.HOME_AWAY_RESULTS.value: False,
         Feature.CONCEDED_STATS.value: False,
         Feature.LAST_N_MATCHES.value: False,
@@ -82,6 +85,7 @@ def pre_process_data(df) -> tuple[DataSet, DataSet, list[str]]:
 
 def feature_engineering(train: DataSet, test: DataSet, unique_teams, feature_params):
     X_train = XTrainConstructor(train.X, unique_teams, **feature_params).construct_table()
+    print(X_train)
     X_train = XTableEncoder(X_train).run()
     y_train = YSeriesEncoder(train.y).run()
 

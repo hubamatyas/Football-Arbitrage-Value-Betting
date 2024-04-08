@@ -9,7 +9,10 @@ class XTableConstructor:
     def __init__(self, **kwargs):
         self.is_goal_stats: bool = kwargs.get(Feature.GOAL_STATS.value, False)
         self.is_shooting_stats: bool = kwargs.get(Feature.SHOOTING_STATS.value, False)
+        self.is_possession_stats: bool = kwargs.get(Feature.POSSESSION_STATS.value, False)
         self.is_result: bool = kwargs.get(Feature.RESULT.value, False)
+        self.is_odds: bool = kwargs.get(Feature.ODDS.value, False)
+        self.is_xg: bool = kwargs.get(Feature.XG.value, False)
         self.is_home_away_results: bool = kwargs.get(Feature.HOME_AWAY_RESULTS.value, False)
         self.is_conceded_stats: bool = kwargs.get(Feature.CONCEDED_STATS.value, False)
         self.is_last_n_matches: bool = kwargs.get(Feature.LAST_N_MATCHES.value, False)
@@ -19,7 +22,7 @@ class XTableConstructor:
         self.is_pi_pairwise: bool = kwargs.get(Feature.PI_PAIRWISE.value, False)
         self.is_pi_weighted: bool = kwargs.get(Feature.PI_WEIGHTED.value, False)
 
-    def construct_row(self, home_team, away_team, home_team_stats, away_team_stats, home_team_pi, away_team_pi, home_team_pairwise_pi, away_team_pairwise_pi, home_team_weighted_pi, away_team_weighted_pi) -> dict:
+    def construct_row(self, original_row, home_team, away_team, home_team_stats, away_team_stats, home_team_pi, away_team_pi, home_team_pairwise_pi, away_team_pairwise_pi, home_team_weighted_pi, away_team_weighted_pi) -> dict:
         row = {
             'HT': home_team,
             'AT': away_team,
@@ -27,6 +30,9 @@ class XTableConstructor:
 
         if self.is_result:
             row = self.add_result_percentage(row, home_team_stats, away_team_stats)
+
+        if self.is_possession_stats:
+            row = self.add_possession_stats(row, home_team_stats, away_team_stats)
 
         if self.is_home_away_results:
             row = self.add_home_away_result_percentage(row, home_team_stats, away_team_stats)
@@ -54,6 +60,12 @@ class XTableConstructor:
 
         if self.is_pi_weighted:
             row = self.add_pi_weighted(row, home_team_weighted_pi, away_team_weighted_pi)
+        
+        if not self.is_odds:
+            row = self.add_odds(row, original_row)
+
+        if not self.is_xg:
+            row = self.add_xg(row, original_row)
 
         return row
 
@@ -73,6 +85,27 @@ class XTableConstructor:
 
         return row
     
+    def add_possession_stats(self, row, home_team_stats, away_team_stats):
+        row['HT_Possession%'] = self.divide(home_team_stats, home_team_stats, 'Possession', 'NumOfMatches')
+        row['AT_Possession%'] = self.divide(away_team_stats, away_team_stats, 'Possession', 'NumOfMatches')
+        row['HT_Possession'] = home_team_stats['Possession'].values[0]
+        row['AT_Possession'] = away_team_stats['Possession'].values[0]
+
+        return row
+    
+    def add_odds(self, row, original_row):
+        row['HT_Odds'] = original_row['B365H']
+        row['AT_Odds'] = original_row['B365A']
+        row['Draw_Odds'] = original_row['B365D']
+
+        return row
+    
+    def add_xg(self, row, original_row):
+        row['HT_XG'] = original_row['PreHXG']
+        row['AT_XG'] = original_row['PreAXG']
+
+        return row
+
     def add_home_away_result_percentage(self, row, home_team_stats, away_team_stats):
         row['HT_HomeWin%'] = self.divide(home_team_stats, home_team_stats, 'HomeWins', 'NumOfHomeMatches')
         row['AT_AwayWin%'] = self.divide(away_team_stats, away_team_stats, 'AwayWins', 'NumOfAwayMatches')
@@ -176,7 +209,7 @@ class XTestConstructor(XTableConstructor):
             home_team_weighted_pi = self.pi_weighted.loc[self.pi_weighted['HomeTeam'] == home_team]
             away_team_weighted_pi = self.pi_weighted.loc[self.pi_weighted['AwayTeam'] == away_team]
 
-            row: dict = self.construct_row(home_team, away_team, home_team_stats, away_team_stats, home_team_pi, away_team_pi, home_team_pairwise_pi, away_team_pairwise_pi, home_team_weighted_pi, away_team_weighted_pi)
+            row: dict = self.construct_row(row, home_team, away_team, home_team_stats, away_team_stats, home_team_pi, away_team_pi, home_team_pairwise_pi, away_team_pairwise_pi, home_team_weighted_pi, away_team_weighted_pi)
             self.X_test = self.X_test._append(row, ignore_index=True)
 
         return self.X_test
@@ -216,7 +249,7 @@ class XTrainConstructor(XTableConstructor):
             home_team_weighted_pi = pi_weighted.loc[pi_weighted['HomeTeam'] == home_team]
             away_team_weighted_pi = pi_weighted.loc[pi_weighted['AwayTeam'] == away_team]
 
-            row: dict = self.construct_row(home_team, away_team, home_team_stats, away_team_stats, home_team_pi, away_team_pi, home_team_pairwise_pi, away_team_pairwise_pi, home_team_weighted_pi, away_team_weighted_pi)
+            row: dict = self.construct_row(row, home_team, away_team, home_team_stats, away_team_stats, home_team_pi, away_team_pi, home_team_pairwise_pi, away_team_pairwise_pi, home_team_weighted_pi, away_team_weighted_pi)
             self.X_train = self.X_train._append(row, ignore_index=True)
 
         return self.X_train

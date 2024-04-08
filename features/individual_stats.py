@@ -19,6 +19,7 @@ class IndividualTeamStats:
         self.team_red_cards = self.init_teams_dict()
         self.team_home_wins = self.init_teams_dict()
         self.team_away_wins = self.init_teams_dict()
+        self.team_possession = self.init_teams_dict()
         self.team_win_streak = self.init_teams_dict()
         self.team_home_draws = self.init_teams_dict()
         self.team_away_draws = self.init_teams_dict()
@@ -52,6 +53,7 @@ class IndividualTeamStats:
         self.update_yellow_cards(row)
         self.update_red_cards(row)
         self.update_corners(row)
+        self.update_posession(row)
         self.update_fouls(row)
         self.update_seasons(row)
         self.update_last_n_matches(row)
@@ -121,6 +123,10 @@ class IndividualTeamStats:
         self.team_corners[row['HomeTeam']] += row['HC']
         self.team_corners[row['AwayTeam']] += row['AC']
 
+    def update_posession(self, row):
+        self.team_possession[row['HomeTeam']] += row['HP']
+        self.team_possession[row['AwayTeam']] += row['AP']
+
     def update_fouls(self, row):
         self.team_fouls[row['HomeTeam']] += row['HF']
         self.team_fouls[row['AwayTeam']] += row['AF']
@@ -171,6 +177,7 @@ class IndividualTeamStats:
             'GoalsLastNMatches': [],
             'GoalDiffLastNMatches': [],
             'WinStreak': [],
+            'Possession': [],
         }
 
         for team in self.unique_teams:
@@ -200,6 +207,7 @@ class IndividualTeamStats:
             data['GoalsLastNMatches'].append(sum(self.team_last_n_matches_goals[team]))
             data['GoalDiffLastNMatches'].append(sum(self.team_last_n_matches_goal_diff[team]))
             data['WinStreak'].append(self.team_win_streak[team])
+            data['Possession'].append(self.team_possession[team])
 
         return pd.DataFrame(data)
     
