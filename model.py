@@ -85,7 +85,6 @@ def pre_process_data(df) -> tuple[DataSet, DataSet, list[str]]:
 
 def feature_engineering(train: DataSet, test: DataSet, unique_teams, feature_params):
     X_train = XTrainConstructor(train.X, unique_teams, **feature_params).construct_table()
-    print(X_train)
     X_train = XTableEncoder(X_train).run()
     y_train = YSeriesEncoder(train.y).run()
 

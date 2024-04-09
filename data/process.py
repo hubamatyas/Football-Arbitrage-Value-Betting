@@ -44,7 +44,6 @@ class DataProcessor:
         test = DataSet()
         test.y = self.df_test['FTR']
         test.X = self.df_test[['HomeTeam', 'AwayTeam', 'Date', 'B365H', 'B365A', 'B365D', 'PreHXG', 'PreAXG']]
-        print(test.X)
         return test
     
     def get_val_data(self) -> DataSet:

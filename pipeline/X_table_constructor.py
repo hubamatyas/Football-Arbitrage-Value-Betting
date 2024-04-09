@@ -61,10 +61,10 @@ class XTableConstructor:
         if self.is_pi_weighted:
             row = self.add_pi_weighted(row, home_team_weighted_pi, away_team_weighted_pi)
         
-        if not self.is_odds:
+        if self.is_odds:
             row = self.add_odds(row, original_row)
 
-        if not self.is_xg:
+        if self.is_xg:
             row = self.add_xg(row, original_row)
 
         return row
