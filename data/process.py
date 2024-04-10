@@ -43,12 +43,14 @@ class DataProcessor:
     def get_test_data(self) -> DataSet:
         test = DataSet()
         test.y = self.df_test['FTR']
+        # make sure to avoid data leakage
         test.X = self.df_test[['HomeTeam', 'AwayTeam', 'Date', 'B365H', 'B365A', 'B365D', 'PreHXG', 'PreAXG']]
         return test
     
     def get_val_data(self) -> DataSet:
         val = DataSet()
         val.y = self.df_val['FTR']
-        val.X = self.df_val[['HomeTeam', 'AwayTeam', 'Date']]
+        # make sure to avoid data leakage
+        val.X = self.df_val[['HomeTeam', 'AwayTeam', 'Date', 'B365H', 'B365A', 'B365D', 'PreHXG', 'PreAXG']]
 
         return val

@@ -148,26 +148,10 @@ class GenerateDataFrame():
                 team_image_map[team_id] = team_data[0]['image']
         
         return team_image_map
-    
-    def get_complete_matches(self, df: pd.DataFrame):
-        # date less than 17/12/2023
-        df = df[df['date'] <= '2023-12-17']
-        return df[df['status'] == 'complete']
-    
-    def convert_and_sort_by_date(self, df: pd.DataFrame):
-        df['date'] = pd.to_datetime(df['date_unix'], unit='s')
-        df = df.sort_values('date')
-
-        return df
 
     def load(self, is_save=False) -> pd.DataFrame:
         df = self.get_footystats_matches(self.league_name, self.country, self.years)
-
         if is_save:
             df.to_csv('raw_footystats.csv', index=False)
         
-        df = self.convert_and_sort_by_date(df)
-        df = self.get_complete_matches(df)
-        df = FootyStatsCleaner(df).run()
-
-        return df
+        return FootyStatsCleaner(df).run()
