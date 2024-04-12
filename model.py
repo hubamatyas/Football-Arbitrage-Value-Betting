@@ -38,7 +38,6 @@ def get_feature_params():
         Feature.GOAL_STATS.value: False,
         Feature.SHOOTING_STATS.value: False,
         Feature.POSSESSION_STATS.value: False,
-        Feature.RESULT.value: False,
         Feature.ODDS.value: False,
         Feature.XG.value: False,
         Feature.HOME_AWAY_RESULTS.value: False,
