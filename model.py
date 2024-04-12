@@ -14,6 +14,7 @@ from pipeline.X_table_constructor import XTrainConstructor, XTestConstructor
 from pipeline.pre_processer import XTableEncoder, YSeriesEncoder, CrossChecker
 
 import xgboost as xgb
+from sklearn.svm import SVC
 from category_encoders import OneHotEncoder
 from sklearn.preprocessing import LabelEncoder
 from catboost import CatBoostClassifier
@@ -78,8 +79,8 @@ def train_model(model, name, X_train: pd.DataFrame, y_train: pd.Series, X_test: 
 def pre_process_data(df) -> tuple[DataSet, DataSet, list[str]]:
     data_processor = DataProcessor(df)
     unique_teams = data_processor.get_unique_teams()
-    # df_train, df_test = data_processor.split_data(train_test_ratio=0.95)
-    train, test = data_processor.split_data_last_n(n=10)
+    train, test = data_processor.split_data(train_test_ratio=0.95)
+    # train, test = data_processor.split_data_last_n(n=10)
 
     return train, test, unique_teams
 
@@ -112,3 +113,6 @@ def run(df, feature_params=get_feature_params()):
     catboost = CatBoostClassifier(iterations=1000, depth=5, learning_rate=0.1, loss_function='MultiClass')
     catboost.set_params(logging_level='Silent')
     catboost = train_model(catboost, 'CatBoost', X_train, y_train, X_test, y_test)
+
+    svm = SVC(kernel='linear')
+    svm = train_model(svm, 'SVM', X_train, y_train, X_test, y_test)
