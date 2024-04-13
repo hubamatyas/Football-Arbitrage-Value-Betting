@@ -12,6 +12,8 @@ class DataProcessor:
         self.df_test = None
         self.df_val = None
 
+        self.test_columns = ['HomeTeam', 'AwayTeam', 'Date', 'B365H', 'B365A', 'B365D', 'PreHXG', 'PreAXG', 'RoundID', 'Season', 'GameWeek']
+
     def get_unique_teams(self) -> list[str]:
         home_teams = self.df['HomeTeam'].unique().tolist()
         away_teams = self.df['AwayTeam'].unique().tolist()
@@ -44,13 +46,13 @@ class DataProcessor:
         test = DataSet()
         test.y = self.df_test['FTR']
         # make sure to avoid data leakage
-        test.X = self.df_test[['HomeTeam', 'AwayTeam', 'Date', 'B365H', 'B365A', 'B365D', 'PreHXG', 'PreAXG']]
+        test.X = self.df_test[self.test_columns]
         return test
     
     def get_val_data(self) -> DataSet:
         val = DataSet()
         val.y = self.df_val['FTR']
         # make sure to avoid data leakage
-        val.X = self.df_val[['HomeTeam', 'AwayTeam', 'Date', 'B365H', 'B365A', 'B365D', 'PreHXG', 'PreAXG']]
+        val.X = self.df_val[self.test_columns]
 
         return val

@@ -63,6 +63,9 @@ class FootyStatsCleaner:
         self.new_df['PreHXG'] = self.original_df['team_a_xg_prematch']
         self.new_df['PreAXG'] = self.original_df['team_b_xg_prematch']
         self.new_df['Status'] = self.original_df['status']
+        self.new_df['RoundID'] = self.original_df['roundID']
+        self.new_df['Season'] = self.original_df['season']
+        self.new_df['GameWeek'] = self.original_df['game_week']
 
         return self.new_df
 
