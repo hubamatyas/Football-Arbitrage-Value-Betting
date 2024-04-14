@@ -68,11 +68,6 @@ def train_model(model, name, X_train: pd.DataFrame, y_train: pd.Series, X_test: 
     print('Recall:', recall_score(y_test, y_pred, average='macro'))
     print(f'Cross Validation Accuracy: mean={round(results.mean(), 5)}, std={round(results.std(), 5)}\n')
 
-    # explainer = shap.TreeExplainer(model)
-    # shap_values = explainer.shap_values(X_train)
-    # shap.initjs()
-    # shap.summary_plot(shap_values, X_train, plot_type='bar')
-
     return y_pred
 
 def pre_process_data(df) -> tuple[DataSet, DataSet, list[str]]:
