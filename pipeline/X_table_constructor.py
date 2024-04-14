@@ -94,9 +94,9 @@ class XTableConstructor:
         return row
     
     def add_odds(self, row, original_row):
-        row['HT_Odds'] = original_row['B365H']
-        row['AT_Odds'] = original_row['B365A']
-        row['Draw_Odds'] = original_row['B365D']
+        row['B365H'] = original_row['B365H']
+        row['B365A'] = original_row['B365A']
+        row['B365D'] = original_row['B365D']
 
         return row
     
