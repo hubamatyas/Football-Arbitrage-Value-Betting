@@ -22,5 +22,5 @@ if __name__ == '__main__':
         Feature.PI_PAIRWISE.value: False,
         Feature.PI_WEIGHTED.value: False
     }
-    # df = DataLoader('epl-training.csv', season).load()
+
     model.run(df=df, feature_params=params)
